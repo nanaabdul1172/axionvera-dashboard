@@ -6,6 +6,13 @@ import {
 } from '../apiResilience';
 
 describe('apiResilience utility', () => {
+  beforeAll(() => {
+    // Mock global fetch for environments where it's not defined (like Node.js with JSDOM)
+    if (typeof global.fetch === 'undefined') {
+      global.fetch = jest.fn();
+    }
+  });
+
   describe('withApiResilience', () => {
     it('should return the result of a successful API call', async () => {
       const mockApi = jest.fn().mockResolvedValue('success');
