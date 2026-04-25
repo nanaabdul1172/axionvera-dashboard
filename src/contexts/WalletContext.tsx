@@ -207,11 +207,39 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const disconnect = useCallback(() => {
+    // Stop background polling immediately
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
-    setState((s) => ({ ...s, address: null, balance: null, error: null, walletType: null }));
+
+    // Clear any cached data from localStorage to prevent data leakage
+    // (covers public key, balance, and transaction history caches)
+    const CACHE_KEYS = [
+      'axionvera:publicKey',
+      'axionvera:balance',
+      'axionvera:transactions',
+      'axionvera:walletType',
+      'axionvera:network',
+    ];
+    CACHE_KEYS.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      } catch {
+        // Storage may be unavailable in some environments – ignore silently
+      }
+    });
+
+    // Reset all wallet state
+    setState({
+      address: null,
+      network: NETWORK,
+      balance: null,
+      isConnecting: false,
+      error: null,
+      walletType: null,
+    });
   }, []);
 
   const value = useMemo<WalletContextType>(

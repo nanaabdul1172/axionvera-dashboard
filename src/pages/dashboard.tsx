@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import Head from "next/head";
 
 import BalanceCard from "@/components/BalanceCard";
@@ -6,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import TransactionHistory from "@/components/TransactionHistory";
 import WithdrawForm from "@/components/WithdrawForm";
+import { useEffect } from "react";
 import { useVault } from "@/hooks/useVault";
 import { useWalletContext } from "@/hooks/useWallet";
 
@@ -15,7 +17,15 @@ export default function DashboardPage() {
   // TODO: add governance interface
 
   const wallet = useWalletContext();
+  const router = useRouter();
   const vault = useVault({ walletAddress: wallet.publicKey });
+
+  // Redirect to landing page if the wallet is disconnected while on a protected route
+  useEffect(() => {
+    if (!wallet.isConnected && !wallet.isConnecting) {
+      router.replace('/');
+    }
+  }, [wallet.isConnected, wallet.isConnecting, router]);
 
   return (
     <>

@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 import Navbar from "@/components/Navbar";
@@ -15,6 +16,14 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen } = useSidebar();
   const wallet = useWalletContext();
+  const router = useRouter();
+
+  // Redirect to landing page if wallet is disconnected while on a protected route
+  useEffect(() => {
+    if (!wallet.isConnected && !wallet.isConnecting) {
+      router.replace('/');
+    }
+  }, [wallet.isConnected, wallet.isConnecting, router]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
