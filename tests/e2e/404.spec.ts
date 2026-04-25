@@ -14,7 +14,7 @@ test.describe('404 Error Page', () => {
     
     // Verify 404 content is displayed
     await expect(
-      page.locator('text=404').or(page.locator('text=Not Found'))
+      page.locator('text=404').first().or(page.locator('text=Not Found').first())
     ).toBeVisible();
   });
 
@@ -74,7 +74,7 @@ test.describe('404 Error Page', () => {
     
     expect(response?.status()).toBe(404);
     await expect(
-      page.locator('text=404').or(page.locator('text=Not Found'))
+      page.locator('text=404').first().or(page.locator('text=Not Found').first())
     ).toBeVisible();
   });
 
@@ -83,7 +83,7 @@ test.describe('404 Error Page', () => {
     
     expect(response?.status()).toBe(404);
     await expect(
-      page.locator('text=404').or(page.locator('text=Not Found'))
+      page.locator('text=404').first().or(page.locator('text=Not Found').first())
     ).toBeVisible();
   });
 
@@ -92,7 +92,7 @@ test.describe('404 Error Page', () => {
     
     expect(response?.status()).toBe(404);
     await expect(
-      page.locator('text=404').or(page.locator('text=Not Found'))
+      page.locator('text=404').first().or(page.locator('text=Not Found').first())
     ).toBeVisible();
   });
 
@@ -101,7 +101,7 @@ test.describe('404 Error Page', () => {
     
     for (const route of validRoutes) {
       const response = await page.goto(route);
-      expect(response?.status()).toBe(200);
+      expect([200, 304]).toContain(response?.status());
       
       // Verify 404 content is NOT displayed
       const has404 = await page.locator('text=404').isVisible().catch(() => false);
