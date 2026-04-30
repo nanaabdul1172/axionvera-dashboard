@@ -16,19 +16,16 @@ describe('env utility', () => {
     process.env.TEST_KEY = 'test_value';
     // Ensure window._env_ is not interfering
     if (typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any)._env_ = undefined;
+        (window as any)._env_ = undefined;
     }
     expect(getEnv('TEST_KEY')).toBe('test_value');
   });
 
   it('should return value from window._env_ if present', () => {
     if (typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any)._env_ = { TEST_KEY: 'window_value' };
-      expect(getEnv('TEST_KEY')).toBe('window_value');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any)._env_ = undefined;
+        (window as any)._env_ = { TEST_KEY: 'window_value' };
+        expect(getEnv('TEST_KEY')).toBe('window_value');
+        (window as any)._env_ = undefined;
     }
   });
 

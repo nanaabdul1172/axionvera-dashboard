@@ -23,7 +23,7 @@ export default function ProfileForm({ initialData, onSubmit }: ProfileFormProps)
     register,
     handleSubmit,
     watch,
-    formState: { errors, isDirty, isValid, isSubmitting },
+    formState: { errors, isDirty, isValid, isSubmitting }
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: 'onChange',
@@ -63,7 +63,7 @@ export default function ProfileForm({ initialData, onSubmit }: ProfileFormProps)
             required
             error={errors.firstName}
           />
-
+          
           <FormInput
             {...register('lastName')}
             id="lastName"
@@ -114,9 +114,7 @@ export default function ProfileForm({ initialData, onSubmit }: ProfileFormProps)
               {errors.bio ? (
                 <p className="text-xs text-red-500 dark:text-red-400 font-medium">{errors.bio.message}</p>
               ) : (
-                <p id="bio-helper" className="text-xs text-text-muted">
-                  Optional: Brief description about yourself
-                </p>
+                <p id="bio-helper" className="text-xs text-text-muted">Optional: Brief description about yourself</p>
               )}
             </div>
             <p className="text-xs text-text-muted" aria-hidden="true">
@@ -135,7 +133,7 @@ export default function ProfileForm({ initialData, onSubmit }: ProfileFormProps)
             error={errors.website}
             helperText="Optional: Your personal or professional website"
           />
-
+          
           <FormInput
             {...register('location')}
             id="location"

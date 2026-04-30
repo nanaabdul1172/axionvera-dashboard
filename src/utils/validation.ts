@@ -95,7 +95,17 @@ export const settingsSchema = z.object({
 });
 
 // Deposit/Withdraw form schemas
-export const createDepositSchema = (walletBalance: number | null) =>
+export const depositSchema = z.object({
+  amount: z.coerce
+    .number({
+      required_error: 'Amount is required',
+      invalid_type_error: 'Amount must be a valid number',
+    })
+    .positive('Amount must be greater than 0')
+    .max(10000, 'Amount cannot exceed 10,000'),
+});
+
+export const createWithdrawSchema = (maxBalance: number) => 
   z.object({
     amount: z.coerce
       .number({
@@ -103,38 +113,10 @@ export const createDepositSchema = (walletBalance: number | null) =>
         invalid_type_error: 'Amount must be a valid number',
       })
       .positive('Amount must be greater than 0')
-      .max(10000, 'Amount cannot exceed 10,000')
-      .refine(
-        (val) => walletBalance === null || val <= walletBalance,
-        (val) => ({
-          message: `Amount exceeds your wallet balance of ${walletBalance}`,
-        })
-      ),
-  });
-
-export const depositSchema = createDepositSchema(null);
-
-export const createWithdrawSchema = (maxBalance: number) =>
-  z.object({
-    amount: z.coerce
-      .number({
-        required_error: 'Amount is required',
-        invalid_type_error: 'Amount must be a valid number',
-      })
-      .positive('Amount must be greater than 0')
-      .max(maxBalance, `Amount cannot exceed your vault balance of ${maxBalance}`),
+      .max(maxBalance, `Amount cannot exceed your balance of ${maxBalance}`),
   });
 
 export const withdrawSchema = createWithdrawSchema(10000); // Default for types
-
-// Security preferences (persisted to localStorage)
-export const SECURITY_PREFS_KEY = 'axionvera_security_prefs';
-
-export const securityPrefsSchema = z.object({
-  requireConfirmationModal: z.boolean(),
-  emailNotifications: z.boolean(),
-  trustedAddresses: z.array(z.string()),
-});
 
 // Type exports
 export type ProfileFormData = z.infer<typeof profileSchema>;
@@ -142,4 +124,3 @@ export type SecuritySettingsFormData = z.infer<typeof securitySettingsSchema>;
 export type SettingsFormData = z.infer<typeof settingsSchema>;
 export type DepositFormData = z.infer<typeof depositSchema>;
 export type WithdrawFormData = z.infer<typeof withdrawSchema>;
-export type SecurityPrefs = z.infer<typeof securityPrefsSchema>;
