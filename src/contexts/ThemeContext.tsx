@@ -65,5 +65,29 @@ export function useTheme() {
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
-  return context;
+}
+
+export function useTheme() {
+  const nextTheme = useNextTheme();
+  const context = useContext(ThemeContext);
+  
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+    return nextTheme;
+  // Always call hooks at the top level, never conditionally
+  const context = useContext(ThemeContext);
+  const nextTheme = useNextThemeSafe();
+  
+  // If we have context, use it
+  if (context !== undefined) {
+    return context;
+  }
+  
+  // Fallback to next-themes directly if provider is missing
+  if (nextTheme) {
+    return nextTheme;
+  }
+  
+  // If all else fails, throw an error
+  throw new Error('useTheme must be used within a ThemeProvider');
 }
