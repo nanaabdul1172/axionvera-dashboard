@@ -8,7 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import TransactionHistory from "@/components/TransactionHistory";
 import WithdrawForm from "@/components/WithdrawForm";
 import { useEffect } from "react";
-import { useVault } from "@/hooks/useVault";
+import { useVaultContext } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
 
 export default function DashboardPage() {
@@ -18,7 +18,7 @@ export default function DashboardPage() {
 
   const wallet = useWalletContext();
   const router = useRouter();
-  const vault = useVault({ walletAddress: wallet.publicKey });
+  const vault = useVaultContext();
 
   // Redirect to landing page if the wallet is disconnected while on a protected route
   useEffect(() => {

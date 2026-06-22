@@ -1,17 +1,17 @@
 import { useRouter } from "next/router";
-import { useAnalytics } from "@/hooks/useAnalytics";
+import { useVaultContext } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import AnalyticsMetrics from "@/components/AnalyticsMetrics";
 import BalanceTrendChart from "@/components/BalanceTrendChart";
-import { Skeletons } from "@/components/Skeletons";
+import { StatisticsSkeleton } from "@/components/Skeletons";
 import { useEffect } from "react";
 
 export default function AnalyticsPage() {
   const wallet = useWalletContext();
   const router = useRouter();
-  const analytics = useAnalytics({ walletAddress: wallet.publicKey });
+  const { analytics, analyticsLoading: isLoading, analyticsError: error, refreshAnalytics: refresh } = useVaultContext();
 
   useEffect(() => {
     if (!wallet.isConnected && !wallet.isConnecting) {
@@ -38,29 +38,29 @@ export default function AnalyticsPage() {
               Track your vault performance and historical trends
             </p>
 
-            {analytics.isLoading ? (
+            {isLoading ? (
               <div className="space-y-6">
-                <Skeletons />
+                <StatisticsSkeleton />
                 <div className="h-80 bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />
               </div>
-            ) : analytics.error ? (
+            ) : error ? (
               <div className="p-8 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30">
-                <p className="text-red-600 dark:text-red-300 text-center">{analytics.error}</p>
+                <p className="text-red-600 dark:text-red-300 text-center">{error}</p>
                 <button
-                  onClick={() => analytics.refresh()}
+                  onClick={() => refresh()}
                   className="mt-4 w-full max-w-xs mx-auto block bg-red-600 text-white px-4 py-2 rounded-xl"
                 >
                   Try Again
                 </button>
               </div>
-            ) : analytics.data ? (
+            ) : analytics ? (
               <>
                 <AnalyticsMetrics
-                  rewardPerformance={analytics.data.rewardPerformance}
-                  participationMetrics={analytics.data.participationMetrics}
+                  rewardPerformance={analytics.rewardPerformance}
+                  participationMetrics={analytics.participationMetrics}
                 />
                 <div className="mt-8">
-                  <BalanceTrendChart data={analytics.data.historicalBalances} />
+                  <BalanceTrendChart data={analytics.historicalBalances} />
                 </div>
               </>
             ) : null}

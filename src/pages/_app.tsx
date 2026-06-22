@@ -5,13 +5,15 @@ import "@/styles/globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { VaultProvider } from "@/contexts/VaultContext";
+import { useWalletContext } from "@/hooks/useWallet";
 import ThemeToggle from "@/components/ThemeToggle";
 import { inter, jetbrainsMono } from "@/lib/fonts";
 
 import { useEffect } from "react";
 import { initTelemetry } from "@/utils/telemetry";
 
-export default function App({ Component, pageProps }: AppProps) {
+function AppInner({ Component, pageProps }: AppProps) {
   useEffect(() => {
     initTelemetry();
   }, []);
@@ -24,6 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <ErrorBoundary>
         <ThemeProvider>
           <WalletProvider>
+            <VaultProviderWrapper>
             <Component {...pageProps} />
             <ThemeToggle />
             <Toaster
@@ -32,9 +35,20 @@ export default function App({ Component, pageProps }: AppProps) {
               closeButton
               duration={4000}
             />
+          </VaultProviderWrapper>
           </WalletProvider>
         </ThemeProvider>
       </ErrorBoundary>
     </div>
   );
+}
+
+
+function VaultProviderWrapper({ children }: { children: React.ReactNode }) {
+  const wallet = useWalletContext();
+  return <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>;
+}
+
+export default function App(props: AppProps) {
+  return <AppInner {...props} />;
 }
