@@ -44,6 +44,11 @@ export default function WithdrawForm({
     useTransactionSimulation(walletAddress ?? null);
 
   const onSubmit = async (data: WithdrawFormData) => {
+    if (!walletAddress) {
+      // No wallet address – skip simulation and call onWithdraw directly
+      await onWithdraw(data.amount.toString());
+      return;
+    }
     await simulate("withdraw", data.amount.toString());
   };
 
