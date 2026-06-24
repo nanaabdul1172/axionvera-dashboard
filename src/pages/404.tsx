@@ -16,8 +16,8 @@ export default function Custom404() {
             <div className="text-9xl font-bold bg-gradient-to-r from-axion-500 to-indigo-500 bg-clip-text text-transparent animate-pulse">
               404
             </div>
-            <div className="absolute inset-0 flex items-center justify-center opacity-10">
-              <svg className="w-48 h-48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="absolute inset-0 flex items-center justify-center opacity-10" aria-hidden="true">
+              <svg className="w-48 h-48" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -37,11 +37,12 @@ export default function Custom404() {
               href="/dashboard"
               className="inline-flex items-center justify-center w-full px-6 py-3 text-base font-medium text-white bg-axion-500 rounded-xl hover:bg-axion-400 transition-all duration-200 shadow-lg shadow-axion-500/20 group"
             >
-              <svg 
-                className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
