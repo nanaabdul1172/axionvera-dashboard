@@ -3,6 +3,8 @@ import { formatAmount, shortenAddress } from "@/utils/contractHelpers";
 import type { VaultTx, VaultTxType, VaultTxStatus } from "@/utils/contractHelpers";
 import CopyButton from "./CopyButton";
 import { TransactionSkeleton } from "./Skeletons";
+import { Badge, Button, Select } from "@/design-system";
+import type { BadgeVariant } from "@/design-system";
 
 type TransactionHistoryProps = {
   isConnected: boolean;
@@ -32,10 +34,10 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "failed", label: "Failed" }
 ];
 
-function statusStyles(status: VaultTx["status"]) {
-  if (status === "success") return "border-emerald-900/50 bg-emerald-950/30 text-emerald-200";
-  if (status === "failed") return "border-rose-900/50 bg-rose-950/30 text-rose-200";
-  return "border-border-primary bg-background-secondary/30 text-text-primary";
+function statusToBadgeVariant(status: VaultTx["status"]): BadgeVariant {
+  if (status === "success") return "success";
+  if (status === "failed") return "error";
+  return "pending";
 }
 
 function typeLabel(type: VaultTx["type"]) {
@@ -43,14 +45,6 @@ function typeLabel(type: VaultTx["type"]) {
   if (type === "withdraw") return "Withdraw";
   return "Claim";
 }
-
-function sortIcon(active: boolean, direction: SortDirection) {
-  if (!active) return "↕";
-  return direction === "asc" ? "↑" : "↓";
-}
-
-const selectClassName =
-  "rounded-lg border border-border-primary bg-background-secondary/30 px-3 py-1.5 text-xs text-text-primary outline-none transition hover:bg-background-secondary/60 focus:border-axion-500";
 
 export default function TransactionHistory({
   isConnected,
@@ -110,61 +104,49 @@ export default function TransactionHistory({
             {isConnected && publicKey ? `Recent vault activity for ${shortenAddress(publicKey, 6)}` : "Connect a wallet to view history."}
           </div>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={onClaimRewards}
           disabled={!isConnected || isClaiming}
-          aria-label={isClaiming ? "Claiming rewards" : "Claim your earned rewards"}
-          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-text-primary transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+          loading={isClaiming}
+          loadingLabel="Claiming rewards"
         >
-          {isClaiming ? "Claiming..." : "Claim Rewards"}
-        </button>
+          {isClaiming ? "Claiming…" : "Claim Rewards"}
+        </Button>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <label htmlFor="type-filter" className="text-xs text-text-muted">Type</label>
-          <select
-            id="type-filter"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-            className={selectClassName}
-          >
-            {TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="status-filter" className="text-xs text-text-muted">Status</label>
-          <select
-            id="status-filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className={selectClassName}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {hasActiveFilter ? (
-          <button
-            type="button"
-            onClick={() => {
-              setTypeFilter("all");
-              setStatusFilter("all");
-            }}
+        <Select
+          id="type-filter"
+          aria-label="Filter by type"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+        >
+          {TYPE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </Select>
+        <Select
+          id="status-filter"
+          aria-label="Filter by status"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+        >
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </Select>
+        {hasActiveFilter && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setTypeFilter("all"); setStatusFilter("all"); }}
             aria-label="Clear all transaction filters"
-            className="text-xs text-axion-400 transition hover:text-axion-300 focus:outline-none focus:underline"
           >
             Clear filters
-          </button>
-        ) : null}
+          </Button>
+        )}
       </div>
 
       <div className="mt-5 overflow-hidden rounded-2xl border border-border-primary" role="table" aria-label="Transaction History">
@@ -194,9 +176,7 @@ export default function TransactionHistory({
                 <div className="text-text-primary" role="cell">{formatAmount(tx.amount)}</div>
                 <div className="text-text-muted" role="cell">{new Date(tx.createdAt).toLocaleString()}</div>
                 <div role="cell">
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusStyles(tx.status)}`}>
-                    {tx.status}
-                  </span>
+                  <Badge variant={statusToBadgeVariant(tx.status)}>{tx.status}</Badge>
                   {tx.hash ? (
                     <div className="mt-1 flex items-center gap-1 text-xs text-text-muted">
                       <span>Hash: {shortenAddress(tx.hash, 8)}</span>
