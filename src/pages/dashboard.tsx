@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import TransactionHistory from "@/components/TransactionHistory";
 import WithdrawForm from "@/components/WithdrawForm";
+import ActivityFeed from "@/components/activity/ActivityFeed";
 import { useEffect } from "react";
 import { useVaultContext } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
@@ -103,6 +104,9 @@ export default function DashboardPage() {
                     onClaimRewards={vault.claimRewards}
                     isClaiming={vault.isClaiming}
                   />
+                </div>
+                <div className="mt-6 w-full">
+                  <ActivityFeed />
                 </div>
               </div>
             </div>
