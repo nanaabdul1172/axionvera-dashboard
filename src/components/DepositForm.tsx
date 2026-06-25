@@ -8,6 +8,7 @@ import { AppTooltip } from './AppTooltip';
 import { GLOSSARY } from '@/utils/glossary';
 import { useTransactionSimulation } from '@/hooks/useTransactionSimulation';
 import { TransactionSimulationPreview } from './TransactionSimulationPreview';
+import { Alert, Button } from '@/design-system';
 
 type DepositFormProps = {
   isConnected: boolean;
@@ -60,6 +61,11 @@ export default function DepositForm({
   }
 
   const onSubmit = async (data: DepositFormData) => {
+    if (!walletAddress) {
+      // No wallet connected – skip simulation and call onDeposit directly
+      await onDeposit(data.amount.toString());
+      return;
+    }
     await simulate("deposit", data.amount.toString());
   };
 
@@ -131,59 +137,30 @@ export default function DepositForm({
           />
 
           {simulationError && (
-            <div role="alert" className="rounded-xl border border-rose-900/50 bg-rose-950/30 px-4 py-3 text-xs text-rose-200">
-              {simulationError}
-            </div>
+            <Alert variant="error">{simulationError}</Alert>
           )}
 
-          {status !== 'idle' ? (
-            <div
-              role="status"
-              aria-live="polite"
-              className={`rounded-xl border px-4 py-3 text-sm ${
-                status === 'success'
-                  ? 'border-emerald-900/50 bg-emerald-950/30 text-emerald-200'
-                  : status === 'error'
-                    ? 'border-rose-900/50 bg-rose-950/30 text-rose-200'
-                    : 'border-border-primary bg-background-secondary/30 text-text-primary'
-              }`}
+          {status !== 'idle' && (
+            <Alert
+              variant={status === 'success' ? 'success' : status === 'error' ? 'error' : 'info'}
+              title={status === 'pending' ? 'Deposit transaction pending' : status === 'success' ? 'Deposit completed' : 'Deposit failed'}
             >
-              <div className="font-medium">
-                {status === 'pending' ? 'Deposit transaction pending' : status === 'success' ? 'Deposit completed' : 'Deposit failed'}
-              </div>
-              {statusMessage ? <div className="mt-1 text-xs opacity-90">{statusMessage}</div> : null}
-              {transactionHash ? (
-                <div className="mt-1 text-xs opacity-80">Tx: {shortenAddress(transactionHash, 8)}</div>
-              ) : null}
-            </div>
-          ) : null}
+              {statusMessage ?? null}
+              {transactionHash ? `Tx: ${shortenAddress(transactionHash, 8)}` : null}
+            </Alert>
+          )}
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
             disabled={shouldDisableSubmit}
-            aria-label={simulationStatus === 'loading' ? "Simulating transaction" : isSubmitting ? "Submitting deposit" : "Preview deposit"}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-axion-500 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-axion-500/20 transition hover:bg-axion-400 disabled:cursor-not-allowed disabled:opacity-70"
+            loading={simulationStatus === 'loading' || isSubmitting}
+            loadingLabel={simulationStatus === 'loading' ? "Simulating transaction" : "Submitting deposit"}
+            className="w-full"
           >
-            {simulationStatus === 'loading' ? (
-              <>
-                <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Simulating...
-              </>
-            ) : isSubmitting ? (
-              <>
-                <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Depositing...
-              </>
-            ) : (
-              "Preview Deposit"
-            )}
-          </button>
+            {simulationStatus === 'loading' ? 'Simulating…' : isSubmitting ? 'Depositing…' : 'Preview Deposit'}
+          </Button>
         </form>
       </section>
     </>

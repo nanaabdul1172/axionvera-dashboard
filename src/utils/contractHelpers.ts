@@ -1,5 +1,6 @@
 import type { StellarNetwork } from "@/utils/networkConfig";
 import { withApiResilience, withErrorHandling, safeApiCall, ApiCallOptions } from "./apiResilience";
+import { cache } from "./cache";
 
 export type VaultTxType = "deposit" | "withdraw" | "claim";
 
@@ -119,18 +120,43 @@ function toFixedString(n: number) {
   return n.toString();
 }
 
+/** Cache TTLs (ms) */
+const CACHE_TTL = {
+  balances: 30_000,
+  transactions: 60_000,
+  analytics: 120_000,
+} as const;
+
+function walletTag(walletAddress: string) {
+  return `wallet:${walletAddress}`;
+}
+
 export function createAxionveraVaultSdk(): AxionveraVaultSdk {
   // Base implementations without resilience
   const baseSdk = {
     async getBalances({ walletAddress, network }: { walletAddress: string; network: StellarNetwork }) {
-      await sleep(150);
-      const vault = loadVault(walletAddress, network);
-      return { balance: vault.balance, rewards: vault.rewards };
+      const key = `balances:${network}:${walletAddress}`;
+      return cache.getOrFetch(
+        key,
+        async () => {
+          await sleep(150);
+          const vault = loadVault(walletAddress, network);
+          return { balance: vault.balance, rewards: vault.rewards };
+        },
+        { ttl: CACHE_TTL.balances, swr: true, tags: [walletTag(walletAddress)] },
+      );
     },
     async getTransactions({ walletAddress, network }: { walletAddress: string; network: StellarNetwork }) {
-      await sleep(150);
-      const vault = loadVault(walletAddress, network);
-      return vault.txs;
+      const key = `transactions:${network}:${walletAddress}`;
+      return cache.getOrFetch(
+        key,
+        async () => {
+          await sleep(150);
+          const vault = loadVault(walletAddress, network);
+          return vault.txs;
+        },
+        { ttl: CACHE_TTL.transactions, swr: true, tags: [walletTag(walletAddress)] },
+      );
     },
     async deposit({ walletAddress, network, amount }: { walletAddress: string; network: StellarNetwork; amount: string }) {
       const tx: VaultTx = {
@@ -156,6 +182,7 @@ export function createAxionveraVaultSdk(): AxionveraVaultSdk {
         txs: [completed, ...vault.txs.filter((t) => t.id !== tx.id)].slice(0, 25)
       };
       saveVault(walletAddress, network, next);
+      cache.invalidateByTag(walletTag(walletAddress));
       return completed;
     },
     async withdraw({ walletAddress, network, amount }: { walletAddress: string; network: StellarNetwork; amount: string }) {
@@ -181,6 +208,7 @@ export function createAxionveraVaultSdk(): AxionveraVaultSdk {
         txs: [completed, ...vault.txs.filter((t) => t.id !== tx.id)].slice(0, 25)
       };
       saveVault(walletAddress, network, next);
+      cache.invalidateByTag(walletTag(walletAddress));
       return completed;
     },
     async claimRewards({ walletAddress, network }: { walletAddress: string; network: StellarNetwork }) {
@@ -207,91 +235,99 @@ export function createAxionveraVaultSdk(): AxionveraVaultSdk {
         txs: [completed, ...vault.txs.filter((t) => t.id !== tx.id)].slice(0, 25)
       };
       saveVault(walletAddress, network, next);
+      cache.invalidateByTag(walletTag(walletAddress));
       return completed;
     },
     async getAnalytics({ walletAddress, network }: { walletAddress: string; network: StellarNetwork }) {
-      await sleep(200);
-      const vault = loadVault(walletAddress, network);
-      const txs = vault.txs.filter(tx => tx.status === "success");
+      const key = `analytics:${network}:${walletAddress}`;
+      return cache.getOrFetch(
+        key,
+        async () => {
+          await sleep(200);
+          const vault = loadVault(walletAddress, network);
+          const txs = vault.txs.filter(tx => tx.status === "success");
       
-      // Generate historical balances (last 30 days)
-      const historicalBalances: HistoricalBalancePoint[] = [];
-      let currentBalance = 0;
-      let currentRewards = 0;
-      const now = new Date();
+          // Generate historical balances (last 30 days)
+          const historicalBalances: HistoricalBalancePoint[] = [];
+          let currentBalance = 0;
+          let currentRewards = 0;
+          const now = new Date();
       
-      for (let i = 30; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        const timestamp = date.toISOString();
+          for (let i = 30; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            const timestamp = date.toISOString();
         
-        // Simulate balance changes based on transactions
-        const txsOnDay = txs.filter(tx => {
-          const txDate = new Date(tx.createdAt);
-          return txDate.toDateString() === date.toDateString();
-        });
+            // Simulate balance changes based on transactions
+            const txsOnDay = txs.filter(tx => {
+              const txDate = new Date(tx.createdAt);
+              return txDate.toDateString() === date.toDateString();
+            });
         
-        txsOnDay.forEach(tx => {
-          if (tx.type === "deposit") {
-            currentBalance += Number(tx.amount);
-            currentRewards += Number(tx.amount) * 0.01;
-          } else if (tx.type === "withdraw") {
-            currentBalance = Math.max(0, currentBalance - Number(tx.amount));
-          } else if (tx.type === "claim") {
-            currentBalance += currentRewards;
-            currentRewards = 0;
+            txsOnDay.forEach(tx => {
+              if (tx.type === "deposit") {
+                currentBalance += Number(tx.amount);
+                currentRewards += Number(tx.amount) * 0.01;
+              } else if (tx.type === "withdraw") {
+                currentBalance = Math.max(0, currentBalance - Number(tx.amount));
+              } else if (tx.type === "claim") {
+                currentBalance += currentRewards;
+                currentRewards = 0;
+              }
+            });
+        
+            historicalBalances.push({
+              timestamp,
+              balance: toFixedString(currentBalance),
+              rewards: toFixedString(currentRewards)
+            });
           }
-        });
-        
-        historicalBalances.push({
-          timestamp,
-          balance: toFixedString(currentBalance),
-          rewards: toFixedString(currentRewards)
-        });
-      }
       
-      // Calculate reward performance
-      const claimTxs = txs.filter(tx => tx.type === "claim");
-      const totalRewardsEarned = claimTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
-      const lastClaimTx = claimTxs.length > 0 ? claimTxs[0] : null;
-      const averageRewardRate = totalRewardsEarned > 0 ? "1.0" : "0"; // 1% mock rate
+          // Calculate reward performance
+          const claimTxs = txs.filter(tx => tx.type === "claim");
+          const totalRewardsEarned = claimTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+          const lastClaimTx = claimTxs.length > 0 ? claimTxs[0] : null;
+          const averageRewardRate = totalRewardsEarned > 0 ? "1.0" : "0"; // 1% mock rate
       
-      // Calculate participation metrics
-      const depositTxs = txs.filter(tx => tx.type === "deposit");
-      const withdrawTxs = txs.filter(tx => tx.type === "withdraw");
-      const totalDeposits = depositTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
-      const totalWithdrawals = withdrawTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
-      const netDeposits = totalDeposits - totalWithdrawals;
-      const transactionCount = txs.length;
+          // Calculate participation metrics
+          const depositTxs = txs.filter(tx => tx.type === "deposit");
+          const withdrawTxs = txs.filter(tx => tx.type === "withdraw");
+          const totalDeposits = depositTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+          const totalWithdrawals = withdrawTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+          const netDeposits = totalDeposits - totalWithdrawals;
+          const transactionCount = txs.length;
       
-      const firstInteractionDate = txs.length > 0 ? txs[txs.length - 1].createdAt : null;
-      const lastInteractionDate = txs.length > 0 ? txs[0].createdAt : null;
+          const firstInteractionDate = txs.length > 0 ? txs[txs.length - 1].createdAt : null;
+          const lastInteractionDate = txs.length > 0 ? txs[0].createdAt : null;
       
-      // Calculate active days
-      const activeDaysSet = new Set<string>();
-      txs.forEach(tx => {
-        const date = new Date(tx.createdAt).toDateString();
-        activeDaysSet.add(date);
-      });
-      const activeDays = activeDaysSet.size;
+          // Calculate active days
+          const activeDaysSet = new Set<string>();
+          txs.forEach(tx => {
+            const date = new Date(tx.createdAt).toDateString();
+            activeDaysSet.add(date);
+          });
+          const activeDays = activeDaysSet.size;
       
-      return {
-        historicalBalances,
-        rewardPerformance: {
-          totalRewardsEarned: toFixedString(totalRewardsEarned),
-          averageRewardRate,
-          lastRewardDate: lastClaimTx ? lastClaimTx.createdAt : null
+          return {
+            historicalBalances,
+            rewardPerformance: {
+              totalRewardsEarned: toFixedString(totalRewardsEarned),
+              averageRewardRate,
+              lastRewardDate: lastClaimTx ? lastClaimTx.createdAt : null
+            },
+            participationMetrics: {
+              totalDeposits: toFixedString(totalDeposits),
+              totalWithdrawals: toFixedString(totalWithdrawals),
+              netDeposits: toFixedString(netDeposits),
+              transactionCount,
+              firstInteractionDate,
+              lastInteractionDate,
+              activeDays
+            }
+          };
         },
-        participationMetrics: {
-          totalDeposits: toFixedString(totalDeposits),
-          totalWithdrawals: toFixedString(totalWithdrawals),
-          netDeposits: toFixedString(netDeposits),
-          transactionCount,
-          firstInteractionDate,
-          lastInteractionDate,
-          activeDays
-        }
-      };
+        { ttl: CACHE_TTL.analytics, swr: true, tags: [walletTag(walletAddress)] },
+      );
     }
   };
 

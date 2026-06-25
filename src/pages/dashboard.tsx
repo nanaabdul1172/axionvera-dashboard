@@ -7,16 +7,12 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import TransactionHistory from "@/components/TransactionHistory";
 import WithdrawForm from "@/components/WithdrawForm";
-import ActivityFeed from "@/components/activity/ActivityFeed";
+import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 import { useEffect } from "react";
 import { useVaultContext } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
 
 export default function DashboardPage() {
-  // TODO: add analytics dashboard
-  // TODO: add wallet options
-  // TODO: add governance interface
-
   const wallet = useWalletContext();
   const router = useRouter();
   const vault = useVaultContext();
@@ -39,10 +35,14 @@ export default function DashboardPage() {
           <Navbar
             publicKey={wallet.publicKey}
             isConnecting={wallet.isConnecting}
+            walletType={wallet.walletType}
+            availableWallets={wallet.availableWallets}
             onConnect={wallet.connect}
             onDisconnect={wallet.disconnect}
+            onSwitch={wallet.switchWallet}
           />
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 md:py-8 w-full">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 md:py-8 w-full space-y-6">
+            {/* Balance + Forms Row */}
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
               <div className="col-span-1 lg:col-span-1 w-full">
                 <BalanceCard
@@ -64,7 +64,6 @@ export default function DashboardPage() {
                     status={vault.depositStatus}
                     walletBalance={wallet.balance ? parseFloat(wallet.balance) : null}
                     walletAddress={wallet.publicKey}
-
                     statusMessage={
                       vault.depositStatus === "pending"
                         ? `Depositing ${vault.lastDepositAmount ?? "0"} tokens into the vault.`
@@ -95,20 +94,24 @@ export default function DashboardPage() {
                     walletAddress={wallet.publicKey}
                   />
                 </div>
-                <div className="mt-6 w-full overflow-x-auto">
-                  <TransactionHistory
-                    isConnected={wallet.isConnected}
-                    publicKey={wallet.publicKey}
-                    isLoading={vault.isLoading}
-                    transactions={vault.transactions}
-                    onClaimRewards={vault.claimRewards}
-                    isClaiming={vault.isClaiming}
-                  />
-                </div>
-                <div className="mt-6 w-full">
-                  <ActivityFeed />
-                </div>
               </div>
+            </div>
+
+            {/* Analytics Dashboard — Full Width */}
+            <div className="w-full">
+              <AnalyticsDashboard />
+            </div>
+
+            {/* Transaction History — Full Width */}
+            <div className="w-full overflow-x-auto">
+              <TransactionHistory
+                isConnected={wallet.isConnected}
+                publicKey={wallet.publicKey}
+                isLoading={vault.isLoading}
+                transactions={vault.transactions}
+                onClaimRewards={vault.claimRewards}
+                isClaiming={vault.isClaiming}
+              />
             </div>
           </div>
         </div>

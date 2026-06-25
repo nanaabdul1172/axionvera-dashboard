@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { type Proposal, type ProposalStatus, type Vote } from "@/utils/contractHelpersGovernance";
 import ProposalCard from "./ProposalCard";
 import { Skeleton } from "@/components/Skeleton";
+import { Select } from "@/design-system";
 
 interface ProposalListProps {
   proposals: Proposal[];
@@ -28,9 +29,6 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "votes", label: "Most Votes" },
   { value: "endingSoon", label: "Ending Soon" },
 ];
-
-const selectClassName =
-  "rounded-lg border border-border-primary bg-background-secondary/30 px-3 py-1.5 text-xs text-text-primary outline-none transition hover:bg-background-secondary/60 focus:border-axion-500";
 
 export default function ProposalList({
   proposals,
@@ -84,32 +82,32 @@ export default function ProposalList({
     <div className="flex h-full flex-col">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <select
+          <Select
+            id="proposal-status-filter"
+            aria-label="Filter by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className={selectClassName}
           >
             {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
-          </select>
-          <select
+          </Select>
+          <Select
+            id="proposal-sort"
+            aria-label="Sort proposals"
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className={selectClassName}
           >
             {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="relative">
+          <label htmlFor="proposal-search" className="sr-only">Search proposals</label>
           <input
-            type="text"
+            id="proposal-search"
+            type="search"
             placeholder="Search proposals..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -120,6 +118,7 @@ export default function ProposalList({
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -139,13 +138,14 @@ export default function ProposalList({
             <Skeleton className="h-32 w-full rounded-xl" />
           </>
         ) : filteredProposals.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-3 rounded-full bg-background-secondary p-3">
+          <div className="flex flex-col items-center justify-center py-12 text-center" role="status">
+            <div className="mb-3 rounded-full bg-background-secondary p-3" aria-hidden="true">
               <svg
                 className="h-6 w-6 text-text-muted"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -175,7 +175,7 @@ export default function ProposalList({
       </div>
 
       {hasActiveFilter && !isLoading && filteredProposals.length > 0 && (
-        <p className="mt-3 text-center text-xs text-text-muted">
+        <p className="mt-3 text-center text-xs text-text-muted" aria-live="polite" aria-atomic="true">
           Showing {filteredProposals.length} of {proposals.length} proposals
         </p>
       )}

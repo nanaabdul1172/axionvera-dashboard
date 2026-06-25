@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { type Proposal, type ProposalStatus, type Vote } from "@/utils/contractHelpersGovernance";
 import { shortenAddress, formatAmount } from "@/utils/contractHelpers";
+import { Badge } from "@/design-system";
+import type { BadgeVariant } from "@/design-system";
 
 interface ProposalCardProps {
   proposal: Proposal;
@@ -9,19 +11,12 @@ interface ProposalCardProps {
   isSelected?: boolean;
 }
 
-function statusStyles(status: ProposalStatus) {
-  switch (status) {
-    case "active":
-      return "border-axion-500/50 bg-axion-950/20 text-axion-300";
-    case "passed":
-      return "border-emerald-500/50 bg-emerald-950/20 text-emerald-300";
-    case "rejected":
-      return "border-rose-500/50 bg-rose-950/20 text-rose-300";
-    case "executed":
-      return "border-violet-500/50 bg-violet-950/20 text-violet-300";
-    case "cancelled":
-      return "border-amber-500/50 bg-amber-950/20 text-amber-300";
-  }
+function statusToBadgeVariant(status: ProposalStatus): BadgeVariant {
+  const map: Record<ProposalStatus, BadgeVariant> = {
+    active: "active", passed: "passed", rejected: "rejected",
+    executed: "executed", cancelled: "cancelled",
+  };
+  return map[status];
 }
 
 function statusLabel(status: ProposalStatus) {
@@ -71,6 +66,8 @@ export default function ProposalCard({ proposal, userVotes, onSelect, isSelected
   return (
     <button
       onClick={() => onSelect(proposal)}
+      aria-label={`View proposal: ${proposal.title} — status: ${statusLabel(proposal.status)}${userVote ? `, you voted ${userVote.choice}` : ''}`}
+      aria-pressed={isSelected}
       className={`w-full text-left rounded-xl border p-4 transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-axion-500/50 ${
         isSelected
           ? "border-axion-500 bg-axion-950/10 shadow-md"
@@ -82,11 +79,9 @@ export default function ProposalCard({ proposal, userVotes, onSelect, isSelected
           <h3 className="font-semibold text-text-primary truncate">{proposal.title}</h3>
           <p className="mt-1 text-sm text-text-secondary line-clamp-2">{proposal.description}</p>
         </div>
-        <span
-          className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusStyles(proposal.status)}`}
-        >
+        <Badge variant={statusToBadgeVariant(proposal.status)} className="shrink-0 text-xs">
           {statusLabel(proposal.status)}
-        </span>
+        </Badge>
       </div>
 
       <div className="mt-3 flex items-center gap-4 text-xs text-text-muted">
@@ -101,7 +96,7 @@ export default function ProposalCard({ proposal, userVotes, onSelect, isSelected
         )}
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2" aria-hidden="true">
         <div className="flex h-2 overflow-hidden rounded-full bg-background-secondary">
           <div
             className="bg-emerald-500 transition-all"
