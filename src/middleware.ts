@@ -1,24 +1,29 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isPublicRoute, requiresAuth } from "@/permissions/routes";
 
+/**
+ * Middleware for route protection based on RBAC.
+ * 
+ * Note: Full permission checking (role-based) happens client-side in RouteGuard
+ * components because we need wallet context. This middleware only handles
+ * basic authentication (wallet connection) checks.
+ */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect authenticated routes; everything else passes through.
-  const isProtectedRoute =
-    pathname === "/dashboard" ||
-    pathname.startsWith("/dashboard/") ||
-    pathname === "/profile" ||
-    pathname.startsWith("/profile/");
-
-  if (!isProtectedRoute) {
+  // Allow public routes
+  if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 
-  const hasWallet = request.cookies.get("hasWallet")?.value === "true";
+  // Check if route requires authentication
+  if (requiresAuth(pathname)) {
+    const hasWallet = request.cookies.get("hasWallet")?.value === "true";
 
-  if (!hasWallet) {
-    return NextResponse.redirect(new URL("/", request.url));
+    if (!hasWallet) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   return NextResponse.next();
