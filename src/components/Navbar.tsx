@@ -51,6 +51,12 @@ export default function Navbar({
     [publicKey],
   );
 
+  // Get active wallet metadata
+  const activeWalletMeta = useMemo(
+    () => availableWallets.find((w) => w.id === walletType),
+    [availableWallets, walletType]
+  );
+
   // Close the wallet dropdown when clicking outside or pressing Escape
   useEffect(() => {
     if (!isWalletDropdownOpen) return;

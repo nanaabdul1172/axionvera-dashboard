@@ -5,6 +5,7 @@ import "@/styles/globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { RBACProvider } from "@/contexts/RBACContext";
 import { VaultProvider } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -38,7 +39,9 @@ function AppInner({ Component, pageProps }: AppProps) {
       <ErrorBoundary>
         <ThemeProvider>
           <WalletProvider>
-            <ProvidersInner {...props} />
+            <RBACProvider>
+              <ProvidersInner Component={Component} pageProps={pageProps} />
+            </RBACProvider>
           </WalletProvider>
         </ThemeProvider>
       </ErrorBoundary>
@@ -54,15 +57,14 @@ function ProvidersInner({ Component, pageProps }: AppProps) {
   const wallet = useWalletContext();
   return (
     <GovernanceProvider walletAddress={wallet.publicKey}>
-      <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>
+      <VaultProvider walletAddress={wallet.publicKey}>
+        <Toaster position="top-right" />
+        <Component {...pageProps} />
+      </VaultProvider>
     </GovernanceProvider>
   );
 }
 
 export default function App(props: AppProps) {
-  return (
-    <VaultProviderWrapper>
-      <AppInner {...props} />
-    </VaultProviderWrapper>
-  );
+  return <AppInner {...props} />;
 }
