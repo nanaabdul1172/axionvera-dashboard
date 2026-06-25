@@ -252,7 +252,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     });
 
     if (currentWalletType) {
-      disconnectWallet(currentWalletType).catch(() => {/* swallow */});
+      disconnectWallet(currentWalletType).catch(() => { /* swallow disconnect errors */ });
     }
 
     notify.success("Wallet Disconnected", "You have been disconnected from your wallet.");
