@@ -9,7 +9,7 @@ import {
   validateTransactionInput,
   detectTransactionError,
   getTransactionRecoveryHandler,
-  TransactionState,
+  TransactionState as RecoveryTransactionState,
   type TransactionInput,
   type TransactionError
 } from '@/utils/transactionRecovery';
@@ -84,7 +84,7 @@ export function useTransactionRecovery(options: UseRecoveryOptions = {}) {
         );
 
         if (result) {
-          recoveryHandler.recordAttempt(txId, txType, TransactionState.SUCCESS);
+          recoveryHandler.recordAttempt(txId, txType, RecoveryTransactionState.SUCCESS);
           
           setTxState(prev => ({
             ...prev,
@@ -100,7 +100,7 @@ export function useTransactionRecovery(options: UseRecoveryOptions = {}) {
         recoveryHandler.recordAttempt(
           txId,
           txType,
-          TransactionState.FAILED,
+          RecoveryTransactionState.FAILED,
           recovery.error || undefined
         );
 
@@ -119,7 +119,7 @@ export function useTransactionRecovery(options: UseRecoveryOptions = {}) {
         recoveryHandler.recordAttempt(
           txId,
           txType,
-          TransactionState.FAILED,
+          RecoveryTransactionState.FAILED,
           recovery.error || undefined
         );
 
@@ -134,7 +134,7 @@ export function useTransactionRecovery(options: UseRecoveryOptions = {}) {
         return null;
       }
     },
-    [recovery]
+    [recovery, recoveryHandler]
   );
 
   /**
@@ -169,7 +169,7 @@ export function useTransactionRecovery(options: UseRecoveryOptions = {}) {
     });
     
     recovery.clearError();
-  }, [recovery]);
+  }, [recovery, recoveryHandler]);
 
   return {
     // State

@@ -38,8 +38,15 @@ import React, {
 import { StellarNetwork, NETWORK } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
 import { emit } from "@/observability/diagnostics";
-
-type WalletType = "freighter" | "albedo";
+import { WalletId, WalletMeta } from "@/wallets";
+import {
+  getAvailableWallets,
+  connectWallet,
+  disconnectWallet,
+  switchWallet as switchWalletService,
+  restoreSession,
+  pollSession
+} from "@/services/walletService";
 
 type WalletState = {
   address: string | null;
@@ -211,7 +218,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         walletType: session.walletId,
       });
 
-      emit('wallet_connected', { address, walletType });
+      emit('wallet_connected', { address: session.address, walletType });
       notify.success('Wallet Connected', `Successfully connected to ${walletType} wallet.`);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to connect wallet.";
@@ -244,15 +251,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       walletType: null,
     });
 
-    emit('wallet_disconnected');
-    notify.success('Wallet Disconnected', 'You have been disconnected from your wallet.');
-  }, []);
-
     if (currentWalletType) {
-      disconnectWallet(currentWalletType).catch(() => {/* swallow */});
+      disconnectWallet(currentWalletType).catch(() => { /* swallow disconnect errors */ });
     }
 
-    notify.success("Wallet Disconnected", "You have been disconnected from your wallet.");
+    emit('wallet_disconnected');
+    notify.success('Wallet Disconnected', 'You have been disconnected from your wallet.');
   }, [state.walletType]);
 
   // ── switchWallet ──────────────────────────────────────────────────────────

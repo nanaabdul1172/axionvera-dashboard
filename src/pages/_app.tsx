@@ -17,7 +17,7 @@ import { emit } from "@/observability/diagnostics";
 import { GovernanceProvider } from "@/contexts/GovernanceContext";
 
 
-function AppInner({ Component, pageProps }: AppProps) {
+function AppInner(props: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
@@ -40,6 +40,7 @@ function AppInner({ Component, pageProps }: AppProps) {
           <WalletProvider>
             <ProvidersInner {...props} />
           </WalletProvider>
+          <Toaster />
         </ThemeProvider>
       </ErrorBoundary>
     </div>
@@ -54,15 +55,13 @@ function ProvidersInner({ Component, pageProps }: AppProps) {
   const wallet = useWalletContext();
   return (
     <GovernanceProvider walletAddress={wallet.publicKey}>
-      <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>
+      <VaultProvider walletAddress={wallet.publicKey}>
+        <Component {...pageProps} />
+      </VaultProvider>
     </GovernanceProvider>
   );
 }
 
 export default function App(props: AppProps) {
-  return (
-    <VaultProviderWrapper>
-      <AppInner {...props} />
-    </VaultProviderWrapper>
-  );
+  return <AppInner {...props} />;
 }
