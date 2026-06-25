@@ -7,6 +7,8 @@ import {
 } from "@/utils/contractHelpersGovernance";
 import { shortenAddress, formatAmount } from "@/utils/contractHelpers";
 import { Skeleton } from "@/components/Skeleton";
+import { Alert, Badge, Button, Spinner } from "@/design-system";
+import type { BadgeVariant } from "@/design-system";
 
 interface ProposalDetailProps {
   proposal: Proposal | null;
@@ -21,19 +23,12 @@ interface ProposalDetailProps {
   onBack: () => void;
 }
 
-function statusStyles(status: ProposalStatus) {
-  switch (status) {
-    case "active":
-      return "border-axion-500/50 bg-axion-950/20 text-axion-300";
-    case "passed":
-      return "border-emerald-500/50 bg-emerald-950/20 text-emerald-300";
-    case "rejected":
-      return "border-rose-500/50 bg-rose-950/20 text-rose-300";
-    case "executed":
-      return "border-violet-500/50 bg-violet-950/20 text-violet-300";
-    case "cancelled":
-      return "border-amber-500/50 bg-amber-950/20 text-amber-300";
-  }
+function statusToBadgeVariant(status: ProposalStatus): BadgeVariant {
+  const map: Record<ProposalStatus, BadgeVariant> = {
+    active: "active", passed: "passed", rejected: "rejected",
+    executed: "executed", cancelled: "cancelled",
+  };
+  return map[status];
 }
 
 function statusLabel(status: ProposalStatus) {
@@ -123,21 +118,21 @@ export default function ProposalDetail({
     <div className="space-y-6">
       <div>
         <button
+          type="button"
           onClick={onBack}
+          aria-label="Back to proposals list"
           className="mb-3 inline-flex items-center gap-1 text-sm text-text-muted transition hover:text-axion-400"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to proposals
         </button>
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-xl font-bold text-text-primary">{proposal.title}</h2>
-          <span
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${statusStyles(proposal.status)}`}
-          >
+          <Badge variant={statusToBadgeVariant(proposal.status)} className="shrink-0">
             {statusLabel(proposal.status)}
-          </span>
+          </Badge>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
           <span>ID: {proposal.id}</span>
@@ -251,66 +246,68 @@ export default function ProposalDetail({
             </div>
           ) : (
             <div className="flex flex-col gap-2 sm:flex-row">
-              <button
+              <Button
+                variant="outline"
+                size="md"
                 onClick={() => onVote("for")}
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-950/20 px-4 py-2.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-950/40 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting && voteStatus === "pending" ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                ) : (
+                loading={isSubmitting && voteStatus === "pending"}
+                loadingLabel="Casting vote for"
+                aria-label="Vote for this proposal"
+                className="border-emerald-500/30 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/40 focus-visible:ring-emerald-500"
+                leftIcon={
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                )}
+                }
+              >
                 Vote For
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="md"
                 onClick={() => onVote("against")}
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-rose-500/30 bg-rose-950/20 px-4 py-2.5 text-sm font-medium text-rose-300 transition hover:bg-rose-950/40 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting && voteStatus === "pending" ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                ) : (
+                loading={isSubmitting && voteStatus === "pending"}
+                loadingLabel="Casting vote against"
+                aria-label="Vote against this proposal"
+                className="border-rose-500/30 bg-rose-950/20 text-rose-300 hover:bg-rose-950/40 focus-visible:ring-rose-500"
+                leftIcon={
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                )}
+                }
+              >
                 Vote Against
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="md"
                 onClick={() => onVote("abstain")}
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-950/20 px-4 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-950/40 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting && voteStatus === "pending" ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                ) : (
+                loading={isSubmitting && voteStatus === "pending"}
+                loadingLabel="Casting abstain vote"
+                aria-label="Abstain from voting on this proposal"
+                className="border-amber-500/30 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 focus-visible:ring-amber-500"
+                leftIcon={
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                   </svg>
-                )}
+                }
+              >
                 Abstain
-              </button>
+              </Button>
             </div>
           )}
 
-          {voteStatus === "success" && (
-            <p className="mt-2 text-sm text-emerald-400">Your vote has been recorded successfully.</p>
-          )}
-          {voteStatus === "error" && voteError && (
-            <p className="mt-2 text-sm text-rose-400">{voteError}</p>
-          )}
+          <div aria-live="polite" aria-atomic="true">
+            {voteStatus === "success" && (
+              <Alert variant="success" className="mt-2">Your vote has been recorded successfully.</Alert>
+            )}
+            {voteStatus === "error" && voteError && (
+              <Alert variant="error" className="mt-2">{voteError}</Alert>
+            )}
+          </div>
         </div>
       )}
 
@@ -345,12 +342,16 @@ export default function ProposalDetail({
             ))}
           </div>
           {votes.length > 5 && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowAllVotes((v) => !v)}
-              className="mt-3 text-xs text-axion-400 transition hover:text-axion-300"
+              aria-expanded={showAllVotes}
+              aria-label={showAllVotes ? "Show fewer votes" : `Show all ${votes.length} votes`}
+              className="mt-3 text-axion-400 hover:text-axion-300"
             >
               {showAllVotes ? "Show less" : `Show all ${votes.length} votes`}
-            </button>
+            </Button>
           )}
         </div>
       )}

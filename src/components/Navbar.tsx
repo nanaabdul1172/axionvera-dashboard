@@ -51,34 +51,7 @@ export default function Navbar({
     [publicKey],
   );
 
-  const activeWalletMeta = useMemo(
-    () => availableWallets.find((w) => w.id === walletType) ?? null,
-    [availableWallets, walletType],
-  );
-
-  /** Pre-check availability for every wallet so the picker can show "Install" links. */
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let cancelled = false;
-    (async () => {
-      const entries = await Promise.all(
-        availableWallets.map(async (w) => {
-          try {
-            // Dynamic import to avoid bundling isWalletAvailable at top-level
-            const { isWalletAvailable } = await import("@/services/walletService");
-            const ok = await isWalletAvailable(w.id);
-            return [w.id, ok] as const;
-          } catch {
-            return [w.id, false] as const;
-          }
-        }),
-      );
-      if (!cancelled) setWalletAvailability(Object.fromEntries(entries));
-    })();
-    return () => { cancelled = true; };
-  }, [availableWallets]);
-
-  // Close connected-wallet dropdown on outside click
+  // Close the wallet dropdown when clicking outside or pressing Escape
   useEffect(() => {
     if (!isWalletDropdownOpen) return;
     function handleClickOutside(e: MouseEvent) {
@@ -86,8 +59,18 @@ export default function Navbar({
         setIsWalletDropdownOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsWalletDropdownOpen(false);
+        document.getElementById('wallet-menu-button')?.focus();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isWalletDropdownOpen]);
 
   // Close wallet picker on outside click
@@ -168,23 +151,24 @@ export default function Navbar({
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-3 text-sm text-slate-600 dark:text-slate-300 sm:flex">
-            <Link href="/dashboard" className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60">
+          <nav aria-label="Main navigation" className="hidden items-center gap-3 text-sm text-slate-600 dark:text-slate-300 sm:flex">
+            <Link href="/dashboard" className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500">
               Vault
             </Link>
-            <Link href="/analytics" className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60">
+            <Link href="/analytics" className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500">
               Analytics
             </Link>
-            <Link href="/profile" className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60">
+            <Link href="/profile" className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500">
               Profile
             </Link>
             <a
               href="https://stellar.org/soroban"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60"
+              className="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
             >
               Soroban
+              <span className="sr-only">(opens in new tab)</span>
             </a>
           </nav>
         </div>
@@ -201,8 +185,9 @@ export default function Navbar({
                 type="button"
                 onClick={() => setIsWalletDropdownOpen((v) => !v)}
                 aria-label="Wallet options"
-                aria-haspopup="true"
+                aria-haspopup="menu"
                 aria-expanded={isWalletDropdownOpen}
+                aria-controls="wallet-dropdown"
                 className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/30 dark:bg-slate-900/30 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 transition hover:bg-slate-200/50 dark:hover:bg-slate-900/60"
               >
                 {activeWalletMeta && (
@@ -221,6 +206,7 @@ export default function Navbar({
               {/* Connected wallet dropdown */}
               {isWalletDropdownOpen && (
                 <div
+                  id="wallet-dropdown"
                   role="menu"
                   aria-labelledby="wallet-menu-button"
                   className="absolute right-0 mt-2 w-72 origin-top-right rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl ring-1 ring-black/5 dark:ring-white/5 z-50"

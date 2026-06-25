@@ -66,7 +66,12 @@ describe("useVault", () => {
         throw new Error("Simulated deposit failure");
       },
       withdraw: async () => ({ id: "withdraw-1", type: "withdraw", amount: "1", status: "success", createdAt: new Date().toISOString() }),
-      claimRewards: async () => ({ id: "claim-1", type: "claim", amount: "0", status: "success", createdAt: new Date().toISOString() })
+      claimRewards: async () => ({ id: "claim-1", type: "claim", amount: "0", status: "success", createdAt: new Date().toISOString() }),
+      getAnalytics: async () => ({
+        historicalBalances: [],
+        rewardPerformance: { totalRewardsEarned: "0", averageRewardRate: "0", lastRewardDate: null },
+        participationMetrics: { totalDeposits: "0", totalWithdrawals: "0", netDeposits: "0", transactionCount: 0, firstInteractionDate: null, lastInteractionDate: null, activeDays: 0 },
+      }),
     };
 
     const { result } = renderHook(() =>

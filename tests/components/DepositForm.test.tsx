@@ -3,27 +3,16 @@ import userEvent from "@testing-library/user-event";
 
 import DepositForm from "@/components/DepositForm";
 
-// Mock the simulation service so tests don't depend on async SDK/localStorage
-jest.mock("@/services/sdk/simulationService", () => ({
-  simulateDeposit: jest.fn(async () => ({
-    type: "deposit",
-    amount: "12.5",
-    currentBalance: "100",
-    projectedBalance: "112.5",
-    projectedRewards: "0.125",
-    estimatedFee: "0.00001",
-    netChange: "12.5",
-    steps: [
-      { label: "Validate amount", detail: "12.5 XLM", status: "ok" },
-      { label: "Fetch current balance", detail: "100 XLM available", status: "ok" },
-      { label: "Project outcome", detail: "112.5 XLM after transaction", status: "ok" },
-    ],
-    warnings: [],
-  })),
-  simulateWithdraw: jest.fn(),
+// Bypass the simulation preview so form submission reaches onDeposit directly
+jest.mock("@/hooks/useTransactionSimulation", () => ({
+  useTransactionSimulation: () => ({
+    simulationStatus: "idle",
+    simulationResult: null,
+    simulationError: null,
+    simulate: jest.fn(),
+    resetSimulation: jest.fn(),
+  }),
 }));
-
-const MOCK_WALLET = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
 describe("DepositForm", () => {
   test("submits amount via two-step preview → confirm flow", async () => {

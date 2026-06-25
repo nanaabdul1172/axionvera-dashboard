@@ -6,7 +6,7 @@ import { notify } from '@/utils/notifications';
 import { formatAmount, shortenAddress } from '@/utils/contractHelpers';
 import { useSimulation } from '@/features/transactions';
 import { TransactionSimulationPreview } from './TransactionSimulationPreview';
-import { SimulationPanel } from './forms';
+import { Alert, Button } from '@/design-system';
 
 type WithdrawFormProps = {
   isConnected: boolean;
@@ -55,6 +55,11 @@ export default function WithdrawForm({
   } = useSimulation(walletAddress ?? null);
 
   const onSubmit = async (data: WithdrawFormData) => {
+    if (!walletAddress) {
+      // No wallet address – skip simulation and call onWithdraw directly
+      await onWithdraw(data.amount.toString());
+      return;
+    }
     await simulate("withdraw", data.amount.toString());
   };
 
@@ -109,59 +114,31 @@ export default function WithdrawForm({
             helperText={`Enter amount between 0.0001 and ${formatAmount(balance)}`}
           />
 
-          {/* Inline simulation panel (live preview) */}
-          <SimulationPanel
-            status={simulationStatus}
-            outcome={simulationOutcome}
-            steps={simulationSteps}
-            warnings={simulationWarnings}
-            error={simulationError}
-            errorCode={simulationErrorCode}
-            errorFix={simulationErrorFix}
-          />
+          {simulationError && (
+            <Alert variant="error">{simulationError}</Alert>
+          )}
 
-          {/* Transaction status banner */}
-          {status !== 'idle' ? (
-            <div
-              role="status"
-              aria-live="polite"
-              className={`rounded-xl border px-4 py-3 text-sm ${
-                status === 'success'
-                  ? 'border-emerald-900/50 bg-emerald-950/30 text-emerald-200'
-                  : status === 'error'
-                    ? 'border-rose-900/50 bg-rose-950/30 text-rose-200'
-                    : 'border-border-primary bg-background-secondary/30 text-text-primary'
-              }`}
+          {status !== 'idle' && (
+            <Alert
+              variant={status === 'success' ? 'success' : status === 'error' ? 'error' : 'info'}
+              title={status === 'pending' ? 'Withdrawal transaction pending' : status === 'success' ? 'Withdrawal completed' : 'Withdrawal failed'}
             >
-              <div className="font-medium">
-                {status === 'pending'
-                  ? 'Withdrawal transaction pending'
-                  : status === 'success'
-                    ? 'Withdrawal completed'
-                    : 'Withdrawal failed'}
-              </div>
-              {statusMessage ? <div className="mt-1 text-xs opacity-90">{statusMessage}</div> : null}
-              {transactionHash ? (
-                <div className="mt-1 text-xs opacity-80">Tx: {shortenAddress(transactionHash, 8)}</div>
-              ) : null}
-            </div>
-          ) : null}
+              {statusMessage ?? null}
+              {transactionHash ? `Tx: ${shortenAddress(transactionHash, 8)}` : null}
+            </Alert>
+          )}
 
-          {/* Submit button */}
-          <button
+          <Button
             type="submit"
+            variant="secondary"
+            size="md"
             disabled={shouldDisableSubmit}
-            aria-label={
-              simulationStatus === 'loading'
-                ? "Simulating transaction"
-                : isSubmitting
-                  ? "Submitting withdrawal"
-                  : "Preview withdrawal"
-            }
-            className="w-full rounded-xl border border-border-primary bg-background-secondary/30 px-4 py-3 text-sm font-medium text-text-primary transition hover:bg-background-secondary/60 disabled:cursor-not-allowed disabled:opacity-60"
+            loading={simulationStatus === 'loading' || isSubmitting}
+            loadingLabel={simulationStatus === 'loading' ? "Simulating transaction" : "Submitting withdrawal"}
+            className="w-full"
           >
-            {simulationStatus === 'loading' ? 'Simulating...' : isSubmitting ? 'Submitting...' : 'Preview Withdrawal'}
-          </button>
+            {simulationStatus === 'loading' ? 'Simulating…' : isSubmitting ? 'Withdrawing…' : 'Preview Withdrawal'}
+          </Button>
         </form>
       </section>
     </>
