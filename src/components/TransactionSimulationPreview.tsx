@@ -161,7 +161,7 @@ export function TransactionSimulationPreview({
           disabled={isSubmitting}
           loading={isSubmitting}
           loadingLabel="Processing transaction"
-          aria-label={isSubmitting ? "Processing transaction" : `Confirm ${result.type}`}
+          aria-label={isSubmitting ? "Processing transaction" : `Confirm ${isDeposit ? "Deposit" : "Withdrawal"}`}
           className={`flex-1 ${isDeposit ? "" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-400"}`}
         >
           {isSubmitting ? "Processing…" : `Confirm ${isDeposit ? "Deposit" : "Withdrawal"}`}
