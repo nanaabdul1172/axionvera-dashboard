@@ -44,7 +44,15 @@ export default function GovernancePage() {
       <div className="flex min-h-screen bg-background-primary">
         <Sidebar />
         <div className="flex-1 lg:ml-64">
-          <Navbar />
+          <Navbar
+            publicKey={wallet.publicKey}
+            isConnecting={wallet.isConnecting}
+            walletType={wallet.walletType}
+            availableWallets={wallet.availableWallets}
+            onConnect={wallet.connect}
+            onDisconnect={wallet.disconnect}
+            onSwitch={wallet.switchWallet}
+          />
           <main className="p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -27,8 +27,11 @@ export default function AnalyticsPage() {
           <Navbar
             publicKey={wallet.publicKey}
             isConnecting={wallet.isConnecting}
+            walletType={wallet.walletType}
+            availableWallets={wallet.availableWallets}
             onConnect={wallet.connect}
             onDisconnect={wallet.disconnect}
+            onSwitch={wallet.switchWallet}
           />
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 md:py-8 w-full">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">

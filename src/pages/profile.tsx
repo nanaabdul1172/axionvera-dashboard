@@ -51,8 +51,11 @@ export default function ProfilePage() {
         <Navbar
           publicKey={wallet.publicKey}
           isConnecting={wallet.isConnecting}
+          walletType={wallet.walletType}
+          availableWallets={wallet.availableWallets}
           onConnect={wallet.connect}
           onDisconnect={wallet.disconnect}
+          onSwitch={wallet.switchWallet}
         />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:pl-64' : ''}`}>
           <div className="mx-auto max-w-4xl px-6 py-8">

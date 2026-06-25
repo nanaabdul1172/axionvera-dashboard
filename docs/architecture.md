@@ -17,10 +17,14 @@ Axionvera Dashboard is a Next.js (Pages Router) application with a small set of 
 ## Key Modules
 
 - `src/pages/dashboard.tsx`: wires wallet + vault hooks into the main dashboard UI
-- `src/hooks/useWallet.ts`: Stellar wallet integration (Freighter API)
+- `src/hooks/useWallet.ts`: re-exports from WalletContext (see wallet-architecture.md for the full stack)
+- `src/wallets/`: wallet provider interface, registry, and built-in adapters (Freighter, Albedo)
+- `src/services/walletService.ts`: thin service layer — connect/disconnect/switch/restoreSession
 - `src/hooks/useVault.ts`: vault orchestration (load state, submit actions, refresh)
 - `src/utils/networkConfig.ts`: Soroban RPC + Horizon configuration and contract IDs
 - `src/utils/contractHelpers.ts`: SDK adapter interface + default mock implementation
+
+See [wallet-architecture.md](./wallet-architecture.md) for a complete guide to the multi-wallet provider registry.
 
 ## SDK and Contract Interaction
 

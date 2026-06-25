@@ -38,8 +38,11 @@ export default function DashboardPage() {
           <Navbar
             publicKey={wallet.publicKey}
             isConnecting={wallet.isConnecting}
+            walletType={wallet.walletType}
+            availableWallets={wallet.availableWallets}
             onConnect={wallet.connect}
             onDisconnect={wallet.disconnect}
+            onSwitch={wallet.switchWallet}
           />
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 md:py-8 w-full">
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
