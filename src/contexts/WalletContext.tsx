@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { StellarNetwork, NETWORK } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
+import { emit } from "@/observability/diagnostics";
 
 type WalletType = "freighter" | "albedo";
 
@@ -234,6 +235,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         walletType,
       });
 
+      emit('wallet_connected', { address, walletType });
       notify.success('Wallet Connected', `Successfully connected to ${walletType} wallet.`);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to connect wallet.";
@@ -244,6 +246,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         error: message,
         walletType: null,
       }));
+      emit('wallet_connect_error', { error: message, walletType });
       notify.error('Connection Failed', message);
     }
   }, []);
@@ -262,7 +265,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       error: null,
       walletType: null,
     });
-    
+
+    emit('wallet_disconnected');
     notify.success('Wallet Disconnected', 'You have been disconnected from your wallet.');
   }, []);
 
