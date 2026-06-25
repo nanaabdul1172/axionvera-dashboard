@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 
 import WithdrawForm from "@/components/WithdrawForm";
 
-// Mock the simulation service so tests don't depend on async SDK/localStorage
-jest.mock("@/services/sdk/simulationService", () => ({
+// Mock the SDK barrel — this is the path useSimulation imports from
+jest.mock("@/services/sdk", () => ({
   simulateWithdraw: jest.fn(async () => ({
     type: "withdraw",
     amount: "12.5",
@@ -22,6 +22,20 @@ jest.mock("@/services/sdk/simulationService", () => ({
     warnings: [],
   })),
   simulateDeposit: jest.fn(),
+  SimulationError: class SimulationError extends Error {
+    code: string;
+    suggestedFix: string;
+    constructor(message: string, code: string, suggestedFix: string) {
+      super(message);
+      this.code = code;
+      this.suggestedFix = suggestedFix;
+    }
+  },
+}));
+
+// Prevent notification side-effects in tests
+jest.mock("@/utils/notifications", () => ({
+  notify: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));
 
 const MOCK_WALLET = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -42,24 +56,14 @@ describe("WithdrawForm", () => {
       />
     );
 
-    // Type amount
     await user.type(screen.getByLabelText(/amount/i), "12.5");
 
-    // Wait for Preview button to be enabled
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: /preview withdrawal/i })).toBeEnabled()
-    );
+    const previewButton = await screen.findByRole("button", { name: /preview withdrawal/i });
+    expect(previewButton).toBeEnabled();
+    await user.click(previewButton);
 
-    // Click Preview — triggers simulation, shows confirmation modal
-    await user.click(screen.getByRole("button", { name: /preview withdrawal/i }));
-
-    // Confirmation modal should appear with a Confirm button
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: /confirm withdrawal/i })).toBeInTheDocument()
-    );
-
-    // Click Confirm — calls onWithdraw
-    await user.click(screen.getByRole("button", { name: /confirm withdrawal/i }));
+    const confirmButton = await screen.findByRole("button", { name: /confirm withdrawal/i }, { timeout: 5000 });
+    await user.click(confirmButton);
 
     await waitFor(() => expect(onWithdraw).toHaveBeenCalledWith("12.5"));
   });

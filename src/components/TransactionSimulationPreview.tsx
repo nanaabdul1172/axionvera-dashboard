@@ -18,16 +18,17 @@
 import { useEffect, useRef } from "react";
 import { formatAmount } from "@/utils/contractHelpers";
 import type { SimulationResult } from "@/hooks/useTransactionSimulation";
+import type { SimulationStep } from "@/services/sdk";
 import { Button, Dialog } from "@/design-system";
 
 type TransactionSimulationPreviewProps = {
-  result: PreviewResult;
+  result: SimulationResult;
   isSubmitting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: "positive" | "negative" | "neutral" }) {
+function Row({ label, value, highlight, tooltip }: { label: string; value: string; highlight?: "positive" | "negative" | "neutral"; tooltip?: string }) {
   const valueClass =
     highlight === "positive" ? "text-emerald-400" :
     highlight === "negative" ? "text-rose-400" :

@@ -60,7 +60,7 @@ export function Dialog({ open, onClose, title, description, size = "md", childre
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[--z-modal] flex items-center justify-center px-4 backdrop-blur-sm bg-black/60" aria-hidden="true">
+    <div className="fixed inset-0 z-[--z-modal] flex items-center justify-center px-4 backdrop-blur-sm bg-black/60">
       <div
         ref={panelRef}
         role="dialog"

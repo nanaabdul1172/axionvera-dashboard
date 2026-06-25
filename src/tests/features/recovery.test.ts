@@ -15,6 +15,14 @@ import {
   executeRecoveryWorkflow
 } from '@/features/recovery';
 
+jest.mock('@/errors/recovery', () => {
+  const actual = jest.requireActual('@/errors/recovery');
+  return {
+    ...actual,
+    sleep: jest.fn().mockResolvedValue(undefined)
+  };
+});
+
 describe('Recovery Workflows', () => {
   it('should have workflows defined', () => {
     expect(Object.keys(RECOVERY_WORKFLOWS).length).toBeGreaterThan(0);
