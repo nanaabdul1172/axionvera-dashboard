@@ -38,17 +38,15 @@ import React, {
 import { StellarNetwork, NETWORK } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
 import { emit } from "@/observability/diagnostics";
+import { WalletId, WalletMeta } from "@/wallets";
 import {
   getAvailableWallets,
   connectWallet,
   disconnectWallet,
   switchWallet as switchWalletService,
   restoreSession,
-  pollSession,
+  pollSession
 } from "@/services/walletService";
-import type { WalletId, WalletMeta } from "@/types/wallet";
-
-type WalletType = "freighter" | "albedo";
 
 type WalletState = {
   address: string | null;
@@ -253,13 +251,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       walletType: null,
     });
 
-    emit('wallet_disconnected');
-    
     if (currentWalletType) {
-      disconnectWallet(currentWalletType).catch(() => {/* swallow */});
+      disconnectWallet(currentWalletType).catch(() => { /* swallow disconnect errors */ });
     }
 
-    notify.success("Wallet Disconnected", "You have been disconnected from your wallet.");
+    emit('wallet_disconnected');
+    notify.success('Wallet Disconnected', 'You have been disconnected from your wallet.');
   }, [state.walletType]);
 
   // ── switchWallet ──────────────────────────────────────────────────────────

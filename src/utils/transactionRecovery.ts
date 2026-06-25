@@ -196,7 +196,7 @@ export class TransactionRecoveryHandler {
     const context = this.contexts.get(transactionId);
     if (!context) return false;
 
-    return (
+    return Boolean(
       context.status === TransactionState.FAILED &&
       context.error?.retryable &&
       context.attemptCount < context.maxRetries

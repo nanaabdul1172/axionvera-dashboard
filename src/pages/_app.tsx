@@ -18,7 +18,7 @@ import { emit } from "@/observability/diagnostics";
 import { GovernanceProvider } from "@/contexts/GovernanceContext";
 
 
-function AppInner({ Component, pageProps }: AppProps) {
+function AppInner(props: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
@@ -43,6 +43,7 @@ function AppInner({ Component, pageProps }: AppProps) {
               <ProvidersInner Component={Component} pageProps={pageProps} />
             </RBACProvider>
           </WalletProvider>
+          <Toaster />
         </ThemeProvider>
       </ErrorBoundary>
     </div>
@@ -58,7 +59,6 @@ function ProvidersInner({ Component, pageProps }: AppProps) {
   return (
     <GovernanceProvider walletAddress={wallet.publicKey}>
       <VaultProvider walletAddress={wallet.publicKey}>
-        <Toaster position="top-right" />
         <Component {...pageProps} />
       </VaultProvider>
     </GovernanceProvider>

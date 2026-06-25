@@ -3,19 +3,45 @@ import userEvent from "@testing-library/user-event";
 
 import WithdrawForm from "@/components/WithdrawForm";
 
-// Bypass the simulation preview so form submission reaches onWithdraw directly
-jest.mock("@/hooks/useTransactionSimulation", () => ({
-  useTransactionSimulation: () => ({
-    simulationStatus: "idle",
-    simulationResult: null,
-    simulationError: null,
-    simulate: jest.fn(),
-    resetSimulation: jest.fn(),
-  }),
+// Mock the SDK barrel — this is the path useSimulation imports from
+jest.mock("@/services/sdk", () => ({
+  simulateWithdraw: jest.fn(async () => ({
+    type: "withdraw",
+    amount: "12.5",
+    currentBalance: "50",
+    projectedBalance: "37.5",
+    projectedRewards: "0",
+    estimatedFee: "0.00001",
+    netChange: "-12.5",
+    steps: [
+      { label: "Validate amount", detail: "12.5 XLM", status: "ok" },
+      { label: "Fetch current balance", detail: "50 XLM available", status: "ok" },
+      { label: "Check sufficient funds", detail: "50 XLM available", status: "ok" },
+      { label: "Project outcome", detail: "37.5 XLM after transaction", status: "ok" },
+    ],
+    warnings: [],
+  })),
+  simulateDeposit: jest.fn(),
+  SimulationError: class SimulationError extends Error {
+    code: string;
+    suggestedFix: string;
+    constructor(message: string, code: string, suggestedFix: string) {
+      super(message);
+      this.code = code;
+      this.suggestedFix = suggestedFix;
+    }
+  },
 }));
 
+// Prevent notification side-effects in tests
+jest.mock("@/utils/notifications", () => ({
+  notify: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
+}));
+
+const MOCK_WALLET = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
 describe("WithdrawForm", () => {
-  test("submits amount", async () => {
+  test("submits amount via two-step preview → confirm flow", async () => {
     const user = userEvent.setup();
     const onWithdraw = jest.fn(async () => undefined);
 
@@ -26,12 +52,18 @@ describe("WithdrawForm", () => {
         balance="50"
         onWithdraw={onWithdraw}
         status="idle"
+        walletAddress={MOCK_WALLET}
       />
     );
 
     await user.type(screen.getByLabelText(/amount/i), "12.5");
-    await waitFor(() => expect(screen.getByRole("button", { name: /withdraw/i })).toBeEnabled());
-    await user.click(screen.getByRole("button", { name: /withdraw/i }));
+
+    const previewButton = await screen.findByRole("button", { name: /preview withdrawal/i });
+    expect(previewButton).toBeEnabled();
+    await user.click(previewButton);
+
+    const confirmButton = await screen.findByRole("button", { name: /confirm withdrawal/i }, { timeout: 5000 });
+    await user.click(confirmButton);
 
     await waitFor(() => expect(onWithdraw).toHaveBeenCalledWith("12.5"));
   });

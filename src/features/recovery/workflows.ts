@@ -3,6 +3,7 @@
  */
 
 import { AppError, ErrorCategory, toAppError } from '@/errors';
+import { sleep } from '@/errors/recovery';
 
 /**
  * Workflow state
@@ -95,7 +96,7 @@ export const RECOVERY_WORKFLOWS: Record<string, RecoveryWorkflow> = {
           {
             type: RecoveryActionType.RETRY,
             execute: async () => {
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              await sleep(2000);
             }
           }
         ],
@@ -144,7 +145,7 @@ export const RECOVERY_WORKFLOWS: Record<string, RecoveryWorkflow> = {
           {
             type: RecoveryActionType.RETRY,
             execute: async () => {
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await sleep(1000);
             }
           }
         ],
@@ -186,7 +187,7 @@ export const RECOVERY_WORKFLOWS: Record<string, RecoveryWorkflow> = {
           {
             type: RecoveryActionType.RETRY,
             execute: async () => {
-              await new Promise(resolve => setTimeout(resolve, 5000));
+              await sleep(5000);
             }
           }
         ],
@@ -269,7 +270,7 @@ export const RECOVERY_WORKFLOWS: Record<string, RecoveryWorkflow> = {
           {
             type: RecoveryActionType.RETRY,
             execute: async () => {
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await sleep(1000);
             }
           }
         ],

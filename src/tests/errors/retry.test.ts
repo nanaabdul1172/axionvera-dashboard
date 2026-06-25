@@ -13,6 +13,14 @@ import {
   calculateBackoffDelay
 } from '@/errors';
 
+jest.mock('@/errors/recovery', () => {
+  const actual = jest.requireActual('@/errors/recovery');
+  return {
+    ...actual,
+    sleep: jest.fn().mockResolvedValue(undefined)
+  };
+});
+
 describe('Retry Policies', () => {
   it('should have default policies for all categories', () => {
     Object.values(ErrorCategory).forEach(category => {
@@ -90,8 +98,8 @@ describe('RetryExecutor', () => {
     const executor = new RetryExecutor(policy);
     
     const fn = jest.fn()
-      .mockRejectedValueOnce(new Error('Network error'))
-      .mockRejectedValueOnce(new Error('Network error'))
+      .mockRejectedValueOnce(new NetworkError('Network error'))
+      .mockRejectedValueOnce(new NetworkError('Network error'))
       .mockResolvedValueOnce('success');
 
     const result = await executor.execute(fn);
@@ -106,7 +114,7 @@ describe('RetryExecutor', () => {
     const policy = DEFAULT_RETRY_POLICIES[ErrorCategory.NETWORK];
     const executor = new RetryExecutor(policy);
     
-    const error = new Error('Persistent error');
+    const error = new NetworkError('Persistent error');
     const fn = jest.fn().mockRejectedValue(error);
 
     const result = await executor.execute(fn);
@@ -121,7 +129,7 @@ describe('RetryExecutor', () => {
     const executor = new RetryExecutor(policy);
     
     const fn = jest.fn()
-      .mockRejectedValueOnce(new Error('Error'))
+      .mockRejectedValueOnce(new NetworkError('Error'))
       .mockResolvedValueOnce('success');
 
     const onRetry = jest.fn();
@@ -151,7 +159,7 @@ describe('RetryExecutor', () => {
     const policy = DEFAULT_RETRY_POLICIES[ErrorCategory.NETWORK];
     const executor = new RetryExecutor(policy);
     
-    const fn = jest.fn().mockRejectedValue(new Error('Failed'));
+    const fn = jest.fn().mockRejectedValue(new NetworkError('Failed'));
     const onFailure = jest.fn();
 
     await executor.execute(fn, { onFailure });
