@@ -5,6 +5,7 @@ import "@/styles/globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { RBACProvider } from "@/contexts/RBACContext";
 import { VaultProvider } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -38,7 +39,9 @@ function AppInner(props: AppProps) {
       <ErrorBoundary>
         <ThemeProvider>
           <WalletProvider>
-            <ProvidersInner {...props} />
+            <RBACProvider>
+              <ProvidersInner Component={Component} pageProps={pageProps} />
+            </RBACProvider>
           </WalletProvider>
           <Toaster />
         </ThemeProvider>
