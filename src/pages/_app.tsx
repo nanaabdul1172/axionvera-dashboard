@@ -48,13 +48,17 @@ function AppInner({ Component, pageProps }: AppProps) {
 
 function VaultProviderWrapper({ children }: { children: React.ReactNode }) {
   const wallet = useWalletContext();
-  return <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>;
+  return (
+    <GovernanceProvider walletAddress={wallet.publicKey}>
+      <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>
+    </GovernanceProvider>
+  );
 }
 
 export default function App(props: AppProps) {
-  return <GovernanceProvider walletAddress={wallet.address}>
-  <VaultProviderWrapper>
-    <AppInner {...props} />
-  </VaultProviderWrapper>
-</GovernanceProvider>;
+  return (
+    <VaultProviderWrapper>
+      <AppInner {...props} />
+    </VaultProviderWrapper>
+  );
 }

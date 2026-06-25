@@ -60,6 +60,11 @@ export default function DepositForm({
   }
 
   const onSubmit = async (data: DepositFormData) => {
+    if (!walletAddress) {
+      // No wallet connected – skip simulation and call onDeposit directly
+      await onDeposit(data.amount.toString());
+      return;
+    }
     await simulate("deposit", data.amount.toString());
   };
 

@@ -3,6 +3,17 @@ import userEvent from "@testing-library/user-event";
 
 import DepositForm from "@/components/DepositForm";
 
+// Bypass the simulation preview so form submission reaches onDeposit directly
+jest.mock("@/hooks/useTransactionSimulation", () => ({
+  useTransactionSimulation: () => ({
+    simulationStatus: "idle",
+    simulationResult: null,
+    simulationError: null,
+    simulate: jest.fn(),
+    resetSimulation: jest.fn(),
+  }),
+}));
+
 describe("DepositForm", () => {
   test("submits amount", async () => {
     const user = userEvent.setup();
