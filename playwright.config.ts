@@ -3,7 +3,14 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright configuration for E2E testing
  * @see https://playwright.dev/docs/test-configuration
+ *
+ * NOTE: WebKit is excluded on Windows because the Playwright WebKit engine
+ * is unstable on Windows (worker crashes, page creation timeouts).
+ * It runs on CI (ubuntu-latest) where it is fully supported.
  */
+
+const isWindows = process.platform === 'win32';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -28,10 +35,11 @@ export default defineConfig({
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
     },
-    {
+    // WebKit crashes on Windows — skip locally, runs on CI (Linux)
+    ...(!isWindows ? [{
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-    },
+    }] : []),
   ],
 
   webServer: {
