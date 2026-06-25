@@ -3,6 +3,17 @@ import userEvent from "@testing-library/user-event";
 
 import WithdrawForm from "@/components/WithdrawForm";
 
+// Bypass the simulation preview so form submission reaches onWithdraw directly
+jest.mock("@/hooks/useTransactionSimulation", () => ({
+  useTransactionSimulation: () => ({
+    simulationStatus: "idle",
+    simulationResult: null,
+    simulationError: null,
+    simulate: jest.fn(),
+    resetSimulation: jest.fn(),
+  }),
+}));
+
 describe("WithdrawForm", () => {
   test("submits amount", async () => {
     const user = userEvent.setup();

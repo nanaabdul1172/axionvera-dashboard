@@ -22,9 +22,9 @@ export default function ThemeToggle() {
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="fixed bottom-6 right-6 p-3 rounded-full bg-background-secondary border border-border-primary text-text-primary shadow-xl hover:shadow-axion-500/20 transition-all z-50 focus:outline-none focus:ring-2 focus:ring-axion-500 group overflow-hidden"
-      aria-label="Toggle Dark Mode"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <div className="relative w-6 h-6">
+      <div className="relative w-6 h-6" aria-hidden="true">
         {/* Sun Icon */}
         <svg
           className={`absolute inset-0 transform transition-transform duration-500 ease-in-out ${

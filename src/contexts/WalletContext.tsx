@@ -37,19 +37,9 @@ import React, {
 
 import { StellarNetwork, NETWORK } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
-import { WalletId, WalletMeta } from "@/types/wallet";
-import {
-  connectWallet,
-  disconnectWallet,
-  getAvailableWallets,
-  pollSession,
-  restoreSession,
-  switchWallet as switchWalletService,
-} from "@/services/walletService";
+import { emit } from "@/observability/diagnostics";
 
-// ---------------------------------------------------------------------------
-// State shape
-// ---------------------------------------------------------------------------
+type WalletType = "freighter" | "albedo";
 
 type WalletState = {
   address: string | null;
@@ -220,7 +210,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         error: null,
         walletType: session.walletId,
       });
-      notify.success("Wallet Connected", `Successfully connected to ${walletType}.`);
+
+      emit('wallet_connected', { address, walletType });
+      notify.success('Wallet Connected', `Successfully connected to ${walletType} wallet.`);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to connect wallet.";
       setState((s) => ({
@@ -230,7 +222,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         error: message,
         walletType: null,
       }));
-      notify.error("Connection Failed", message);
+      emit('wallet_connect_error', { error: message, walletType });
+      notify.error('Connection Failed', message);
     }
   }, []);
 
@@ -250,6 +243,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       error: null,
       walletType: null,
     });
+
+    emit('wallet_disconnected');
+    notify.success('Wallet Disconnected', 'You have been disconnected from your wallet.');
+  }, []);
 
     if (currentWalletType) {
       disconnectWallet(currentWalletType).catch(() => {/* swallow */});
