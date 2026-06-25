@@ -6,8 +6,9 @@ import { notify } from '@/utils/notifications';
 import { shortenAddress } from '@/utils/contractHelpers';
 import { AppTooltip } from './AppTooltip';
 import { GLOSSARY } from '@/utils/glossary';
-import { useTransactionSimulation } from '@/hooks/useTransactionSimulation';
+import { useSimulation } from '@/features/transactions';
 import { TransactionSimulationPreview } from './TransactionSimulationPreview';
+import { SimulationPanel } from './forms';
 
 type DepositFormProps = {
   isConnected: boolean;
@@ -45,8 +46,18 @@ export default function DepositForm({
     defaultValues: { amount: '' as any }
   });
 
-  const { simulationStatus, simulationResult, simulationError, simulate, resetSimulation } =
-    useTransactionSimulation(walletAddress ?? null);
+  const {
+    simulationStatus,
+    simulationOutcome,
+    simulationSteps,
+    simulationWarnings,
+    simulationError,
+    simulationErrorCode,
+    simulationErrorFix,
+    simulate,
+    simulateLive,
+    resetSimulation,
+  } = useSimulation(walletAddress ?? null);
 
   const spendableBalance =
     walletBalance !== undefined && walletBalance !== null
@@ -56,6 +67,7 @@ export default function DepositForm({
   function handleMax() {
     if (spendableBalance !== null && spendableBalance > 0) {
       setValue('amount', spendableBalance as any, { shouldValidate: true, shouldDirty: true });
+      simulateLive('deposit', spendableBalance.toString());
     }
   }
 
@@ -76,13 +88,15 @@ export default function DepositForm({
     }
   };
 
-  const shouldDisableSubmit = !isConnected || !isValid || !isDirty || isSubmitting || simulationStatus === 'loading';
+  const shouldDisableSubmit =
+    !isConnected || !isValid || !isDirty || isSubmitting || simulationStatus === 'loading';
 
   return (
     <>
-      {simulationResult && (
+      {/* Confirmation modal — shown only after explicit "Preview" press */}
+      {simulationOutcome && simulationStatus === 'ready' && (
         <TransactionSimulationPreview
-          result={simulationResult}
+          result={simulationOutcome}
           isSubmitting={isSubmitting}
           onConfirm={handleConfirm}
           onCancel={resetSimulation}
@@ -94,6 +108,7 @@ export default function DepositForm({
         <div className="mt-1 text-xs text-text-muted">Deposit tokens into the Axionvera vault.</div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
+          {/* Balance + Max */}
           <div className="flex items-center justify-between text-xs text-text-muted">
             <span>Available Balance</span>
             <div className="flex items-center gap-2">
@@ -111,8 +126,11 @@ export default function DepositForm({
             </div>
           </div>
 
+          {/* Amount field — triggers live simulation on change */}
           <FormInput
-            {...register('amount')}
+            {...register('amount', {
+              onChange: (e) => simulateLive('deposit', e.target.value),
+            })}
             id="deposit-amount"
             inputMode="decimal"
             placeholder="0.0"
@@ -130,12 +148,18 @@ export default function DepositForm({
             }
           />
 
-          {simulationError && (
-            <div role="alert" className="rounded-xl border border-rose-900/50 bg-rose-950/30 px-4 py-3 text-xs text-rose-200">
-              {simulationError}
-            </div>
-          )}
+          {/* Inline simulation panel (live preview) */}
+          <SimulationPanel
+            status={simulationStatus}
+            outcome={simulationOutcome}
+            steps={simulationSteps}
+            warnings={simulationWarnings}
+            error={simulationError}
+            errorCode={simulationErrorCode}
+            errorFix={simulationErrorFix}
+          />
 
+          {/* Transaction status banner */}
           {status !== 'idle' ? (
             <div
               role="status"
@@ -149,7 +173,11 @@ export default function DepositForm({
               }`}
             >
               <div className="font-medium">
-                {status === 'pending' ? 'Deposit transaction pending' : status === 'success' ? 'Deposit completed' : 'Deposit failed'}
+                {status === 'pending'
+                  ? 'Deposit transaction pending'
+                  : status === 'success'
+                    ? 'Deposit completed'
+                    : 'Deposit failed'}
               </div>
               {statusMessage ? <div className="mt-1 text-xs opacity-90">{statusMessage}</div> : null}
               {transactionHash ? (
@@ -158,10 +186,17 @@ export default function DepositForm({
             </div>
           ) : null}
 
+          {/* Submit button */}
           <button
             type="submit"
             disabled={shouldDisableSubmit}
-            aria-label={simulationStatus === 'loading' ? "Simulating transaction" : isSubmitting ? "Submitting deposit" : "Preview deposit"}
+            aria-label={
+              simulationStatus === 'loading'
+                ? "Simulating transaction"
+                : isSubmitting
+                  ? "Submitting deposit"
+                  : "Preview deposit"
+            }
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-axion-500 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-axion-500/20 transition hover:bg-axion-400 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {simulationStatus === 'loading' ? (

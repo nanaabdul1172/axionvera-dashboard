@@ -4,8 +4,9 @@ import { FormInput } from './FormInput';
 import { createWithdrawSchema, WithdrawFormData } from '@/utils/validation';
 import { notify } from '@/utils/notifications';
 import { formatAmount, shortenAddress } from '@/utils/contractHelpers';
-import { useTransactionSimulation } from '@/hooks/useTransactionSimulation';
+import { useSimulation } from '@/features/transactions';
 import { TransactionSimulationPreview } from './TransactionSimulationPreview';
+import { SimulationPanel } from './forms';
 
 type WithdrawFormProps = {
   isConnected: boolean;
@@ -40,8 +41,18 @@ export default function WithdrawForm({
     defaultValues: { amount: '' as any }
   });
 
-  const { simulationStatus, simulationResult, simulationError, simulate, resetSimulation } =
-    useTransactionSimulation(walletAddress ?? null);
+  const {
+    simulationStatus,
+    simulationOutcome,
+    simulationSteps,
+    simulationWarnings,
+    simulationError,
+    simulationErrorCode,
+    simulationErrorFix,
+    simulate,
+    simulateLive,
+    resetSimulation,
+  } = useSimulation(walletAddress ?? null);
 
   const onSubmit = async (data: WithdrawFormData) => {
     await simulate("withdraw", data.amount.toString());
@@ -60,13 +71,15 @@ export default function WithdrawForm({
     }
   };
 
-  const shouldDisableSubmit = !isConnected || !isValid || !isDirty || isSubmitting || simulationStatus === 'loading';
+  const shouldDisableSubmit =
+    !isConnected || !isValid || !isDirty || isSubmitting || simulationStatus === 'loading';
 
   return (
     <>
-      {simulationResult && (
+      {/* Confirmation modal — shown only after explicit "Preview" press */}
+      {simulationOutcome && simulationStatus === 'ready' && (
         <TransactionSimulationPreview
-          result={simulationResult}
+          result={simulationOutcome}
           isSubmitting={isSubmitting}
           onConfirm={handleConfirm}
           onCancel={resetSimulation}
@@ -77,12 +90,16 @@ export default function WithdrawForm({
         <div className="text-sm font-semibold text-text-primary">Withdraw</div>
         <div className="mt-1 text-xs text-text-muted">Withdraw tokens from the Axionvera vault.</div>
         <div className="mt-3 rounded-xl border border-border-primary bg-background-secondary/20 px-4 py-3 text-xs text-text-secondary">
-          Available balance: <span className="font-medium text-text-primary">{formatAmount(balance)}</span>
+          Available balance:{' '}
+          <span className="font-medium text-text-primary">{formatAmount(balance)}</span>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
+          {/* Amount field — triggers live simulation on change */}
           <FormInput
-            {...register('amount')}
+            {...register('amount', {
+              onChange: (e) => simulateLive('withdraw', e.target.value),
+            })}
             id="withdraw-amount"
             inputMode="decimal"
             placeholder="0.0"
@@ -92,12 +109,18 @@ export default function WithdrawForm({
             helperText={`Enter amount between 0.0001 and ${formatAmount(balance)}`}
           />
 
-          {simulationError && (
-            <div role="alert" className="rounded-xl border border-rose-900/50 bg-rose-950/30 px-4 py-3 text-xs text-rose-200">
-              {simulationError}
-            </div>
-          )}
+          {/* Inline simulation panel (live preview) */}
+          <SimulationPanel
+            status={simulationStatus}
+            outcome={simulationOutcome}
+            steps={simulationSteps}
+            warnings={simulationWarnings}
+            error={simulationError}
+            errorCode={simulationErrorCode}
+            errorFix={simulationErrorFix}
+          />
 
+          {/* Transaction status banner */}
           {status !== 'idle' ? (
             <div
               role="status"
@@ -111,7 +134,11 @@ export default function WithdrawForm({
               }`}
             >
               <div className="font-medium">
-                {status === 'pending' ? 'Withdrawal transaction pending' : status === 'success' ? 'Withdrawal completed' : 'Withdrawal failed'}
+                {status === 'pending'
+                  ? 'Withdrawal transaction pending'
+                  : status === 'success'
+                    ? 'Withdrawal completed'
+                    : 'Withdrawal failed'}
               </div>
               {statusMessage ? <div className="mt-1 text-xs opacity-90">{statusMessage}</div> : null}
               {transactionHash ? (
@@ -120,10 +147,17 @@ export default function WithdrawForm({
             </div>
           ) : null}
 
+          {/* Submit button */}
           <button
             type="submit"
             disabled={shouldDisableSubmit}
-            aria-label={simulationStatus === 'loading' ? "Simulating transaction" : isSubmitting ? "Submitting withdrawal" : "Preview withdrawal"}
+            aria-label={
+              simulationStatus === 'loading'
+                ? "Simulating transaction"
+                : isSubmitting
+                  ? "Submitting withdrawal"
+                  : "Preview withdrawal"
+            }
             className="w-full rounded-xl border border-border-primary bg-background-secondary/30 px-4 py-3 text-sm font-medium text-text-primary transition hover:bg-background-secondary/60 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {simulationStatus === 'loading' ? 'Simulating...' : isSubmitting ? 'Submitting...' : 'Preview Withdrawal'}
