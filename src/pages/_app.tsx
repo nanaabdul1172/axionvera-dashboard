@@ -38,16 +38,7 @@ function AppInner({ Component, pageProps }: AppProps) {
       <ErrorBoundary>
         <ThemeProvider>
           <WalletProvider>
-            <VaultProviderWrapper>
-            <Component {...pageProps} />
-            <ThemeToggle />
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              duration={4000}
-            />
-          </VaultProviderWrapper>
+            <ProvidersInner {...props} />
           </WalletProvider>
         </ThemeProvider>
       </ErrorBoundary>
@@ -55,8 +46,11 @@ function AppInner({ Component, pageProps }: AppProps) {
   );
 }
 
-
-function VaultProviderWrapper({ children }: { children: React.ReactNode }) {
+/**
+ * Inner wrapper that has access to the WalletContext, so it can pass
+ * `walletAddress` down to GovernanceProvider and VaultProvider.
+ */
+function ProvidersInner({ Component, pageProps }: AppProps) {
   const wallet = useWalletContext();
   return (
     <GovernanceProvider walletAddress={wallet.publicKey}>

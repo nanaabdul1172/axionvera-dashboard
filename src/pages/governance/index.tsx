@@ -28,8 +28,11 @@ export default function GovernancePage() {
           <Navbar
             publicKey={wallet.publicKey}
             isConnecting={wallet.isConnecting}
+            walletType={wallet.walletType}
+            availableWallets={wallet.availableWallets}
             onConnect={wallet.connect}
             onDisconnect={wallet.disconnect}
+            onSwitch={wallet.switchWallet}
           />
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 md:py-8">
             <GovernanceDashboard />
