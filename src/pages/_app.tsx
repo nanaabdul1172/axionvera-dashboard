@@ -11,14 +11,24 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { inter, jetbrainsMono } from "@/lib/fonts";
 
 import { useEffect } from "react";
+import { useRouter } from "next/router";
 import { initTelemetry } from "@/utils/telemetry";
+import { emit } from "@/observability/diagnostics";
 import { GovernanceProvider } from "@/contexts/GovernanceContext";
 
 
 function AppInner({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+
   useEffect(() => {
     initTelemetry();
   }, []);
+
+  useEffect(() => {
+    const handleRouteChange = (url: string) => emit('page_view', { url });
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => router.events.off('routeChangeComplete', handleRouteChange);
+  }, [router.events]);
 
   return (
     // Apply CSS-variable font classes to the root so the custom properties
@@ -48,13 +58,17 @@ function AppInner({ Component, pageProps }: AppProps) {
 
 function VaultProviderWrapper({ children }: { children: React.ReactNode }) {
   const wallet = useWalletContext();
-  return <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>;
+  return (
+    <GovernanceProvider walletAddress={wallet.publicKey}>
+      <VaultProvider walletAddress={wallet.publicKey}>{children}</VaultProvider>
+    </GovernanceProvider>
+  );
 }
 
 export default function App(props: AppProps) {
-  return <GovernanceProvider walletAddress={wallet.address}>
-  <VaultProviderWrapper>
-    <AppInner {...props} />
-  </VaultProviderWrapper>
-</GovernanceProvider>;
+  return (
+    <VaultProviderWrapper>
+      <AppInner {...props} />
+    </VaultProviderWrapper>
+  );
 }

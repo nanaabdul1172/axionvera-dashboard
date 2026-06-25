@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatAmount, shortenAddress } from "@/utils/contractHelpers";
 import { StatisticsSkeleton } from "./Skeletons";
 import { AppTooltip } from "./AppTooltip";
@@ -28,7 +28,7 @@ export default function BalanceCard({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  async function handleRefresh() {
+  const handleRefresh = useCallback(async () => {
     if (isRefreshing || isLoading) return;
     setIsRefreshing(true);
     try {
@@ -36,7 +36,7 @@ export default function BalanceCard({
     } finally {
       setIsRefreshing(false);
     }
-  }
+  }, [isRefreshing, isLoading, onRefresh]);
 
   // Auto-refresh on a timer while wallet is connected
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function BalanceCard({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isConnected]);
+  }, [isConnected, handleRefresh]);
 
   const isFetching = isLoading || isRefreshing;
 

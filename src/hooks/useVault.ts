@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { notify } from "@/utils/notifications";
+import { emit } from "@/observability/diagnostics";
 
 import {
   createAxionveraVaultSdk,
@@ -213,9 +214,11 @@ export function useVault({ walletAddress, sdk: providedSdk }: UseVaultArgs) {
             lastAmount: amount
           })
         );
+        emit(`vault_${type}`, { amount, hash: transaction.hash });
         notify.success(`${type === "deposit" ? "Deposit" : "Withdrawal"} Confirmed`, `Transaction hash: ${transaction.hash}`);
       } catch (error) {
         const message = getErrorMessage(error, `${type === "deposit" ? "Deposit" : "Withdraw"} failed.`);
+        emit(`vault_${type}_error`, { amount, error: message });
         notify.error(getFailureTitle(type), message);
         setState((current) => {
           const next = updateActionState(current, type, {
@@ -273,9 +276,11 @@ export function useVault({ walletAddress, sdk: providedSdk }: UseVaultArgs) {
     try {
       await sdk.claimRewards({ walletAddress, network: NETWORK });
       await refresh();
+      emit('vault_rewards_claimed');
       notify.success("Rewards Claimed", "Successfully claimed your vault rewards.");
     } catch (error) {
       const message = getErrorMessage(error, "Claim failed.");
+      emit('vault_rewards_claim_error', { error: message });
       notify.error("Claim Failed", message);
       setState((current) => ({ ...current, error: message }));
     } finally {
