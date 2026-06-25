@@ -154,43 +154,52 @@ export default function SecuritySettingsForm({ onSubmit }: SecuritySettingsFormP
         </div>
 
         {/* Password Strength Indicator */}
-        {hasNewPassword && (
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-text-secondary">Password Strength</div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2" role="progressbar" aria-valuemin={0} aria-valuemax={5} aria-valuenow={[
-                newPassword.length >= 8,
-                /[A-Z]/.test(newPassword),
-                /[a-z]/.test(newPassword),
-                /[0-9]/.test(newPassword),
-                /[^A-Za-z0-9]/.test(newPassword)
-              ].filter(Boolean).length} aria-label="Password strength">
-                <div className={`h-1 flex-1 rounded-full ${
-                  newPassword.length >= 8 ? 'bg-green-500' : 'bg-slate-700'
-                }`} />
-                <div className={`h-1 flex-1 rounded-full ${
-                  /[A-Z]/.test(newPassword) ? 'bg-green-500' : 'bg-slate-700'
-                }`} />
-                <div className={`h-1 flex-1 rounded-full ${
-                  /[a-z]/.test(newPassword) ? 'bg-green-500' : 'bg-slate-700'
-                }`} />
-                <div className={`h-1 flex-1 rounded-full ${
-                  /[0-9]/.test(newPassword) ? 'bg-green-500' : 'bg-slate-700'
-                }`} />
-                <div className={`h-1 flex-1 rounded-full ${
-                  /[^A-Za-z0-9]/.test(newPassword) ? 'bg-green-500' : 'bg-slate-700'
-                }`} />
-              </div>
-              <div className="grid grid-cols-5 gap-2 text-xs text-slate-400 dark:text-slate-500 transition-colors">
-                <span>8+ chars</span>
-                <span>Upper</span>
-                <span>Lower</span>
-                <span>Number</span>
-                <span>Special</span>
+        {hasNewPassword && (() => {
+          const requirements = [
+            { met: newPassword.length >= 8, label: "8 or more characters" },
+            { met: /[A-Z]/.test(newPassword), label: "uppercase letter" },
+            { met: /[a-z]/.test(newPassword), label: "lowercase letter" },
+            { met: /[0-9]/.test(newPassword), label: "number" },
+            { met: /[^A-Za-z0-9]/.test(newPassword), label: "special character" },
+          ];
+          const metCount = requirements.filter(r => r.met).length;
+          const unmet = requirements.filter(r => !r.met).map(r => r.label);
+          return (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-text-secondary" aria-hidden="true">Password Strength</div>
+              <div className="space-y-1">
+                <div
+                  className="flex items-center gap-2"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={5}
+                  aria-valuenow={metCount}
+                  aria-label={`Password strength: ${metCount} of 5 requirements met`}
+                >
+                  {requirements.map((req, i) => (
+                    <div
+                      key={i}
+                      className={`h-1 flex-1 rounded-full ${req.met ? 'bg-green-500' : 'bg-slate-700'}`}
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+                <div className="grid grid-cols-5 gap-2 text-xs text-slate-400 dark:text-slate-500 transition-colors" aria-hidden="true">
+                  <span>8+ chars</span>
+                  <span>Upper</span>
+                  <span>Lower</span>
+                  <span>Number</span>
+                  <span>Special</span>
+                </div>
+                <p className="sr-only">
+                  {metCount === 5
+                    ? "All password requirements met."
+                    : `Missing: ${unmet.join(", ")}.`}
+                </p>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border-primary">
           <button

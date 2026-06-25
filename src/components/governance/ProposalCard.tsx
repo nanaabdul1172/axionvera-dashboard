@@ -71,6 +71,8 @@ export default function ProposalCard({ proposal, userVotes, onSelect, isSelected
   return (
     <button
       onClick={() => onSelect(proposal)}
+      aria-label={`View proposal: ${proposal.title} — status: ${statusLabel(proposal.status)}${userVote ? `, you voted ${userVote.choice}` : ''}`}
+      aria-pressed={isSelected}
       className={`w-full text-left rounded-xl border p-4 transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-axion-500/50 ${
         isSelected
           ? "border-axion-500 bg-axion-950/10 shadow-md"
@@ -101,7 +103,7 @@ export default function ProposalCard({ proposal, userVotes, onSelect, isSelected
         )}
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2" aria-hidden="true">
         <div className="flex h-2 overflow-hidden rounded-full bg-background-secondary">
           <div
             className="bg-emerald-500 transition-all"

@@ -19,21 +19,26 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     
     const { onChange, ...inputProps } = props;
 
-    const inputId = props.id || `input-${label?.toString().toLowerCase().replace(/\s+/g, '-')}`;
+    const inputId = props.id || `input-${label?.toString().toLowerCase().replace(/\s+/g, '-') ?? 'field'}`;
     const errorId = `${inputId}-error`;
     const helperId = `${inputId}-helper`;
 
     return (
       <div className="flex flex-col gap-2 w-full">
         {label && (
-          <label 
+          <label
             htmlFor={inputId}
             className={`text-xs font-medium ${
               hasError ? 'text-red-500 dark:text-red-400' : 'text-text-secondary'
             }`}
           >
             {label}
-            {props.required && <span className="text-red-500 dark:text-red-400 ml-1" aria-hidden="true">*</span>}
+            {props.required && (
+              <>
+                <span className="text-red-500 dark:text-red-400 ml-1" aria-hidden="true">*</span>
+                <span className="sr-only"> (required)</span>
+              </>
+            )}
           </label>
         )}
         

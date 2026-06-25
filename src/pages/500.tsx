@@ -24,8 +24,8 @@ export default function Custom500() {
             <div className="text-9xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
               500
             </div>
-            <div className="absolute inset-0 flex items-center justify-center opacity-10">
-              <svg className="w-48 h-48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="absolute inset-0 flex items-center justify-center opacity-10" aria-hidden="true">
+              <svg className="w-48 h-48" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
@@ -48,11 +48,12 @@ export default function Custom500() {
               onClick={handleRefresh}
               className="inline-flex items-center justify-center w-full px-6 py-3 text-base font-medium text-white bg-axion-500 rounded-xl hover:bg-axion-400 transition-all duration-200 shadow-lg shadow-axion-500/20 group"
             >
-              <svg 
-                className="w-5 h-5 mr-2 transform group-hover:rotate-180 transition-transform duration-500" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                className="w-5 h-5 mr-2 transform group-hover:rotate-180 transition-transform duration-500"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -81,14 +82,17 @@ export default function Custom500() {
             
             {/* Error details toggle (helpful for debugging) */}
             <button
+              type="button"
               onClick={() => setShowDetails(!showDetails)}
+              aria-expanded={showDetails}
+              aria-controls="error-details"
               className="mt-3 text-xs text-text-muted hover:text-text-secondary transition"
             >
               {showDetails ? "Hide" : "Show"} technical details
             </button>
             
             {showDetails && (
-              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-left">
+              <div id="error-details" className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-left">
                 <p className="text-xs text-text-muted font-mono">
                   Error Code: 500 - Internal Server Error<br />
                   Timestamp: {new Date().toISOString()}<br />

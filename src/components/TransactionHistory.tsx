@@ -129,7 +129,6 @@ export default function TransactionHistory({
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
             className={selectClassName}
-            aria-label="Filter transactions by type"
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -145,7 +144,6 @@ export default function TransactionHistory({
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
             className={selectClassName}
-            aria-label="Filter transactions by status"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -179,14 +177,14 @@ export default function TransactionHistory({
         <div className="divide-y divide-border-primary" role="rowgroup">
           {isLoading ? (
             <TransactionSkeleton />
-          ) : filteredTransactions.length === 0 ? (
+          ) : sortedTransactions.length === 0 ? (
             <div className="px-4 py-6 text-sm text-text-secondary" role="row">
               <div role="cell" className="col-span-4">
                 {hasActiveFilter ? "No transactions match the selected filters." : "No transactions yet."}
               </div>
             </div>
           ) : (
-            filteredTransactions.map((tx) => (
+            sortedTransactions.map((tx) => (
               <div
                 key={tx.id}
                 className="grid grid-cols-[1.2fr_1fr_1fr_0.9fr] items-center gap-3 px-4 py-3 text-sm"
@@ -212,9 +210,9 @@ export default function TransactionHistory({
         </div>
       </div>
 
-      {hasActiveFilter && !isLoading && filteredTransactions.length > 0 ? (
-        <div className="mt-3 text-xs text-text-muted">
-          Showing {filteredTransactions.length} of {transactions.length} transactions
+      {hasActiveFilter && !isLoading && sortedTransactions.length > 0 ? (
+        <div className="mt-3 text-xs text-text-muted" aria-live="polite" aria-atomic="true">
+          Showing {sortedTransactions.length} of {transactions.length} transactions
         </div>
       ) : null}
     </section>

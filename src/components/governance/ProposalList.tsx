@@ -84,7 +84,9 @@ export default function ProposalList({
     <div className="flex h-full flex-col">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
+          <label htmlFor="proposal-status-filter" className="sr-only">Filter by status</label>
           <select
+            id="proposal-status-filter"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
             className={selectClassName}
@@ -95,7 +97,9 @@ export default function ProposalList({
               </option>
             ))}
           </select>
+          <label htmlFor="proposal-sort" className="sr-only">Sort proposals</label>
           <select
+            id="proposal-sort"
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
             className={selectClassName}
@@ -108,8 +112,10 @@ export default function ProposalList({
           </select>
         </div>
         <div className="relative">
+          <label htmlFor="proposal-search" className="sr-only">Search proposals</label>
           <input
-            type="text"
+            id="proposal-search"
+            type="search"
             placeholder="Search proposals..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -120,6 +126,7 @@ export default function ProposalList({
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -139,13 +146,14 @@ export default function ProposalList({
             <Skeleton className="h-32 w-full rounded-xl" />
           </>
         ) : filteredProposals.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-3 rounded-full bg-background-secondary p-3">
+          <div className="flex flex-col items-center justify-center py-12 text-center" role="status">
+            <div className="mb-3 rounded-full bg-background-secondary p-3" aria-hidden="true">
               <svg
                 className="h-6 w-6 text-text-muted"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -175,7 +183,7 @@ export default function ProposalList({
       </div>
 
       {hasActiveFilter && !isLoading && filteredProposals.length > 0 && (
-        <p className="mt-3 text-center text-xs text-text-muted">
+        <p className="mt-3 text-center text-xs text-text-muted" aria-live="polite" aria-atomic="true">
           Showing {filteredProposals.length} of {proposals.length} proposals
         </p>
       )}

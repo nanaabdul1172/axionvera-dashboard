@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { formatAmount } from "@/utils/contractHelpers";
 import type { SimulationResult } from "@/hooks/useTransactionSimulation";
 
@@ -18,20 +19,67 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
   );
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function TransactionSimulationPreview({ result, isSubmitting, onConfirm, onCancel }: TransactionSimulationPreviewProps) {
   const isDeposit = result.type === "deposit";
   const netChange = parseFloat(result.netChange);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
+    focusable[0]?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') { onCancel(); return; }
+      if (e.key !== 'Tab') return;
+      const els = Array.from(dialog!.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (els.length === 0) { e.preventDefault(); return; }
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [onCancel]);
+
   return (
-    <div role="dialog" aria-modal="true" aria-label="Transaction preview" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-border-primary bg-background-primary p-6 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      aria-hidden="true"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sim-preview-title"
+        aria-hidden="false"
+        className="w-full max-w-sm rounded-2xl border border-border-primary bg-background-primary p-6 shadow-2xl"
+      >
         <div className="mb-4 flex items-center gap-3">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-full ${isDeposit ? "bg-axion-500/15" : "bg-amber-500/15"}`}>
+          <div className={`flex h-9 w-9 items-center justify-center rounded-full ${isDeposit ? "bg-axion-500/15" : "bg-amber-500/15"}`} aria-hidden="true">
             <svg className={`h-4 w-4 ${isDeposit ? "text-axion-400" : "text-amber-400"}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               {isDeposit ? <path d="M12 5v14M5 12l7 7 7-7" /> : <path d="M12 19V5M5 12l7-7 7 7" />}
             </svg>
           </div>
           <div>
-            <div className="text-sm font-semibold text-text-primary">Preview {isDeposit ? "Deposit" : "Withdrawal"}</div>
+            <div id="sim-preview-title" className="text-sm font-semibold text-text-primary">
+              Preview {isDeposit ? "Deposit" : "Withdrawal"}
+            </div>
             <div className="text-xs text-text-muted">Review before confirming</div>
           </div>
         </div>
@@ -49,16 +97,29 @@ export function TransactionSimulationPreview({ result, isSubmitting, onConfirm, 
         </div>
         <p className="mt-3 text-center text-[11px] text-text-muted">This is a simulation. Actual results may vary slightly.</p>
         <div className="mt-4 flex gap-3">
-          <button type="button" onClick={onCancel} disabled={isSubmitting} className="flex-1 rounded-xl border border-border-primary bg-background-secondary/30 px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-background-secondary/60 disabled:cursor-not-allowed disabled:opacity-50">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex-1 rounded-xl border border-border-primary bg-background-secondary/30 px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-background-secondary/60 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} disabled={isSubmitting} aria-label={isSubmitting ? "Processing transaction" : `Confirm ${result.type}`} className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-70 ${isDeposit ? "bg-axion-500 shadow-axion-500/20 hover:bg-axion-400" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-400"}`}>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isSubmitting}
+            aria-label={isSubmitting ? "Processing transaction" : `Confirm ${result.type}`}
+            aria-busy={isSubmitting}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-70 ${isDeposit ? "bg-axion-500 shadow-axion-500/20 hover:bg-axion-400" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-400"}`}
+          >
             {isSubmitting ? (
               <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-            ) : (`Confirm ${isDeposit ? "Deposit" : "Withdrawal"}`)}
+            ) : null}
+            {isSubmitting ? "Processing…" : `Confirm ${isDeposit ? "Deposit" : "Withdrawal"}`}
           </button>
         </div>
       </div>
