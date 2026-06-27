@@ -8,7 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import TransactionHistory from "@/components/TransactionHistory";
 import WithdrawForm from "@/components/WithdrawForm";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useVaultContext } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
 
@@ -17,12 +17,17 @@ export default function DashboardPage() {
   const router = useRouter();
   const vault = useVaultContext();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Redirect to landing page if the wallet is disconnected while on a protected route
   useEffect(() => {
-    if (!wallet.isConnected && !wallet.isConnecting) {
+    if (mounted && !wallet.isConnected && !wallet.isConnecting) {
       router.replace('/');
     }
-  }, [wallet.isConnected, wallet.isConnecting, router]);
+  }, [mounted, wallet.isConnected, wallet.isConnecting, router]);
 
   return (
     <>

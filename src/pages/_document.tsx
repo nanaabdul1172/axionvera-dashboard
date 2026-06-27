@@ -14,6 +14,12 @@ export default function Document() {
         />
         {/* For environment config that can load slightly later */}
         <Script src="/env-config.js" strategy="afterInteractive" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <link rel="apple-touch-icon" href="/axionvera.svg" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Axionvera" />
       </Head>
       <body>
         <Main />

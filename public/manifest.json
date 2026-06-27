@@ -1,0 +1,19 @@
+{
+  "name": "Axionvera Dashboard",
+  "short_name": "Axionvera",
+  "description": "Secure Stellar vault interactions and dashboard for the Axionvera Network.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090a0f",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/axionvera.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
