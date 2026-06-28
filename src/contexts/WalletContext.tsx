@@ -127,13 +127,26 @@ async function fetchBalance(address: string, network: StellarNetwork): Promise<s
 // ---------------------------------------------------------------------------
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<WalletState>({
-    address: null,
-    network: NETWORK,
-    balance: null,
-    isConnecting: false,
-    error: null,
-    walletType: null,
+  const [state, setState] = useState<WalletState>(() => {
+    if (typeof window !== "undefined" && (window as any).__MOCK_WALLET_CONTEXT__) {
+      const mock = (window as any).__MOCK_WALLET_CONTEXT__;
+      return {
+        address: mock.address,
+        network: mock.network || NETWORK,
+        balance: mock.balance,
+        isConnecting: mock.isConnecting,
+        error: mock.error,
+        walletType: mock.walletType,
+      };
+    }
+    return {
+      address: null,
+      network: NETWORK,
+      balance: null,
+      isConnecting: false,
+      error: null,
+      walletType: null,
+    };
   });
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);

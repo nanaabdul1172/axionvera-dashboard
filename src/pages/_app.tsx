@@ -16,10 +16,12 @@ import { useRouter } from "next/router";
 import { initTelemetry } from "@/utils/telemetry";
 import { emit } from "@/observability/diagnostics";
 import { GovernanceProvider } from "@/contexts/GovernanceContext";
+import { OfflineProvider } from "@/pwa/OfflineProvider";
 
 
 function AppInner(props: AppProps) {
   const router = useRouter();
+  const { Component, pageProps } = props;
 
   useEffect(() => {
     initTelemetry();
@@ -38,12 +40,14 @@ function AppInner(props: AppProps) {
     <div className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <ErrorBoundary>
         <ThemeProvider>
-          <WalletProvider>
-            <RBACProvider>
-              <ProvidersInner Component={Component} pageProps={pageProps} />
-            </RBACProvider>
-          </WalletProvider>
-          <Toaster />
+          <OfflineProvider>
+            <WalletProvider>
+              <RBACProvider>
+                <ProvidersInner Component={Component} pageProps={pageProps} router={router} />
+              </RBACProvider>
+            </WalletProvider>
+            <Toaster />
+          </OfflineProvider>
         </ThemeProvider>
       </ErrorBoundary>
     </div>

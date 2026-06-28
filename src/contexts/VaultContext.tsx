@@ -18,6 +18,14 @@ import {
 import { NETWORK, AXIONVERA_VAULT_CONTRACT_ID } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
 import { useSorobanEvents } from "@/hooks/useSorobanEvents";
+import {
+  cacheBalances,
+  getCachedBalances,
+  cacheTransactions,
+  getCachedTransactions,
+  cacheAnalytics,
+  getCachedAnalytics,
+} from "@/cache/offlineCache";
 
 type VaultActionType = "deposit" | "withdraw";
 type VaultActionState = {
@@ -101,11 +109,27 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
         sdk.getBalances({ walletAddress: walletRef.current, network: NETWORK }),
         sdk.getTransactions({ walletAddress: walletRef.current, network: NETWORK }),
       ]);
+      cacheBalances(walletRef.current, balances);
+      cacheTransactions(walletRef.current, transactions);
       setState((s) => ({ ...s, balance: balances.balance, rewards: balances.rewards, transactions, isLoading: false }));
     } catch (e) {
-      const message = getError(e, "Failed to load vault state.");
-      notify.error("Vault Update Failed", message);
-      setState((s) => ({ ...s, isLoading: false, error: message }));
+      const cachedBalances = getCachedBalances(walletRef.current);
+      const cachedTransactions = getCachedTransactions(walletRef.current);
+      if (cachedBalances || cachedTransactions) {
+        setState((s) => ({
+          ...s,
+          balance: cachedBalances?.balance ?? "0",
+          rewards: cachedBalances?.rewards ?? "0",
+          transactions: cachedTransactions ?? [],
+          isLoading: false,
+          error: null,
+        }));
+        notify.info("Offline Mode", "Displaying cached vault details.");
+      } else {
+        const message = getError(e, "Failed to load vault state.");
+        notify.error("Vault Update Failed", message);
+        setState((s) => ({ ...s, isLoading: false, error: message }));
+      }
     }
   }, [sdk]);
 
@@ -117,10 +141,16 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
     setState((s) => ({ ...s, analyticsLoading: true, analyticsError: null }));
     try {
       const analytics = await sdk.getAnalytics({ walletAddress: walletRef.current, network: NETWORK });
+      cacheAnalytics(walletRef.current, analytics);
       setState((s) => ({ ...s, analytics, analyticsLoading: false }));
     } catch (e) {
-      const message = getError(e, "Failed to load analytics.");
-      setState((s) => ({ ...s, analyticsLoading: false, analyticsError: message }));
+      const cachedAnalytics = getCachedAnalytics(walletRef.current);
+      if (cachedAnalytics) {
+        setState((s) => ({ ...s, analytics: cachedAnalytics, analyticsLoading: false, analyticsError: null }));
+      } else {
+        const message = getError(e, "Failed to load analytics.");
+        setState((s) => ({ ...s, analyticsLoading: false, analyticsError: message }));
+      }
     }
   }, [sdk]);
 
