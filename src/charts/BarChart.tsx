@@ -9,6 +9,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useChartTheme } from "@/hooks/useChartTheme";
+import { ChartWrapper } from "./shared/ChartWrapper";
+import { ChartTooltip } from "./shared/ChartTooltip";
 
 export interface BarChartDataPoint {
   label: string;
@@ -30,9 +33,12 @@ interface BarChartProps {
   className?: string;
   barSize?: number;
   radius?: [number, number, number, number];
+  title?: string;
+  description?: string;
+  isLoading?: boolean;
 }
 
-export function BarChart({
+export const BarChart = React.memo(function BarChart({
   data,
   dataKey = "value",
   labelKey = "label",
@@ -46,23 +52,35 @@ export function BarChart({
   className = "",
   barSize = 24,
   radius = [4, 4, 0, 0],
+  title = "Bar chart",
+  description,
+  isLoading = false,
 }: BarChartProps) {
+  const theme = useChartTheme();
+
   return (
-    <div className={`w-full ${className}`}>
+    <ChartWrapper
+      title={title}
+      description={description}
+      isLoading={isLoading}
+      isEmpty={data.length === 0}
+      height={height}
+      className={className}
+    >
       <ResponsiveContainer width="100%" height={height}>
         <ReBarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
           )}
           <XAxis
             dataKey={labelKey}
-            tick={{ fontSize: 12, fill: "rgba(255,255,255,0.5)" }}
-            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+            tick={{ fontSize: 12, fill: theme.axisTickFill }}
+            axisLine={{ stroke: theme.axisLineStroke }}
             tickLine={false}
             minTickGap={30}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "rgba(255,255,255,0.5)" }}
+            tick={{ fontSize: 12, fill: theme.axisTickFill }}
             axisLine={false}
             tickLine={false}
             tickFormatter={yAxisFormatter}
@@ -70,14 +88,11 @@ export function BarChart({
           />
           {showTooltip && (
             <Tooltip
-              contentStyle={{
-                backgroundColor: "rgba(17, 24, 39, 0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              labelStyle={{ color: "rgba(255,255,255,0.7)" }}
-              formatter={(value: number) => [tooltipFormatter(value), ""]}
+              content={
+                <ChartTooltip
+                  formatter={(value) => tooltipFormatter(value as number)}
+                />
+              }
             />
           )}
           <Bar dataKey={dataKey} fill={color} barSize={barSize} radius={radius}>
@@ -88,6 +103,6 @@ export function BarChart({
           </Bar>
         </ReBarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartWrapper>
   );
-}
+});

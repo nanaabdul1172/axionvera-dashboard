@@ -7,6 +7,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useChartTheme } from "@/hooks/useChartTheme";
+import { ChartWrapper } from "./shared/ChartWrapper";
+import { ChartTooltip } from "./shared/ChartTooltip";
 
 export interface PieChartDataPoint {
   name: string;
@@ -23,9 +26,12 @@ interface PieChartProps {
   outerRadius?: number;
   tooltipFormatter?: (value: number, name: string) => [string, string];
   className?: string;
+  title?: string;
+  description?: string;
+  isLoading?: boolean;
 }
 
-export function PieChart({
+export const PieChart = React.memo(function PieChart({
   data,
   showTooltip = true,
   showLegend = true,
@@ -34,9 +40,21 @@ export function PieChart({
   outerRadius = 90,
   tooltipFormatter = (value, name) => [value.toFixed(2), name],
   className = "",
+  title = "Pie chart",
+  description,
+  isLoading = false,
 }: PieChartProps) {
+  const theme = useChartTheme();
+
   return (
-    <div className={`w-full ${className}`}>
+    <ChartWrapper
+      title={title}
+      description={description}
+      isLoading={isLoading}
+      isEmpty={data.length === 0}
+      height={height}
+      className={className}
+    >
       <ResponsiveContainer width="100%" height={height}>
         <RePieChart>
           <Pie
@@ -55,22 +73,22 @@ export function PieChart({
           </Pie>
           {showTooltip && (
             <Tooltip
-              contentStyle={{
-                backgroundColor: "rgba(17, 24, 39, 0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              formatter={(value: number, name: string) => tooltipFormatter(value, name)}
+              content={
+                <ChartTooltip
+                  formatter={(value, name) =>
+                    tooltipFormatter(value as number, name ?? "")
+                  }
+                />
+              }
             />
           )}
           {showLegend && (
             <Legend
-              wrapperStyle={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}
+              wrapperStyle={{ fontSize: "12px", color: theme.axisTickFill }}
             />
           )}
         </RePieChart>
       </ResponsiveContainer>
-    </div>
+    </ChartWrapper>
   );
-}
+});

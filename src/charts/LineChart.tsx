@@ -11,6 +11,9 @@ import {
   AreaChart,
   ReferenceLine,
 } from "recharts";
+import { useChartTheme } from "@/hooks/useChartTheme";
+import { ChartWrapper } from "./shared/ChartWrapper";
+import { ChartTooltip } from "./shared/ChartTooltip";
 
 export interface LineChartDataPoint {
   label: string;
@@ -36,9 +39,12 @@ interface LineChartProps {
   strokeWidth?: number;
   referenceValue?: number;
   referenceLabel?: string;
+  title?: string;
+  description?: string;
+  isLoading?: boolean;
 }
 
-export function LineChart({
+export const LineChart = React.memo(function LineChart({
   data,
   dataKey = "value",
   labelKey = "label",
@@ -56,36 +62,49 @@ export function LineChart({
   strokeWidth = 2,
   referenceValue,
   referenceLabel,
+  title = "Line chart",
+  description,
+  isLoading = false,
 }: LineChartProps) {
+  const theme = useChartTheme();
+
   const average = useMemo(() => {
     if (!showAverage || data.length === 0) return null;
     return data.reduce((sum, d) => sum + (d[dataKey] as number), 0) / data.length;
   }, [data, dataKey, showAverage]);
 
   const ChartComponent = isArea ? AreaChart : ReLineChart;
+  const gradientId = `gradient-${dataKey}-${title.replace(/\s+/g, "-")}`;
 
   return (
-    <div className={`w-full ${className}`}>
+    <ChartWrapper
+      title={title}
+      description={description}
+      isLoading={isLoading}
+      isEmpty={data.length === 0}
+      height={height}
+      className={className}
+    >
       <ResponsiveContainer width="100%" height={height}>
         <ChartComponent data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
-            <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={gradientFrom} stopOpacity={0.3} />
               <stop offset="95%" stopColor={gradientTo} stopOpacity={0} />
             </linearGradient>
           </defs>
           {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
           )}
           <XAxis
             dataKey={labelKey}
-            tick={{ fontSize: 12, fill: "rgba(255,255,255,0.5)" }}
-            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+            tick={{ fontSize: 12, fill: theme.axisTickFill }}
+            axisLine={{ stroke: theme.axisLineStroke }}
             tickLine={false}
             minTickGap={30}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "rgba(255,255,255,0.5)" }}
+            tick={{ fontSize: 12, fill: theme.axisTickFill }}
             axisLine={false}
             tickLine={false}
             tickFormatter={yAxisFormatter}
@@ -93,25 +112,22 @@ export function LineChart({
           />
           {showTooltip && (
             <Tooltip
-              contentStyle={{
-                backgroundColor: "rgba(17, 24, 39, 0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              labelStyle={{ color: "rgba(255,255,255,0.7)" }}
-              formatter={(value: number) => [tooltipFormatter(value), ""]}
+              content={
+                <ChartTooltip
+                  formatter={(value) => tooltipFormatter(value as number)}
+                />
+              }
             />
           )}
           {average !== null && (
             <ReferenceLine
               y={average}
-              stroke="rgba(255,255,255,0.3)"
+              stroke={theme.referenceLineColor}
               strokeDasharray="4 4"
               label={{
                 value: `Avg: ${yAxisFormatter(average)}`,
                 position: "insideTopRight",
-                fill: "rgba(255,255,255,0.5)",
+                fill: theme.axisTickFill,
                 fontSize: 11,
               }}
             />
@@ -136,7 +152,7 @@ export function LineChart({
               dataKey={dataKey}
               stroke={color}
               strokeWidth={strokeWidth}
-              fill={`url(#gradient-${dataKey})`}
+              fill={`url(#${gradientId})`}
               dot={false}
               activeDot={{ r: 4, fill: color, stroke: "#fff", strokeWidth: 2 }}
             />
@@ -152,6 +168,6 @@ export function LineChart({
           )}
         </ChartComponent>
       </ResponsiveContainer>
-    </div>
+    </ChartWrapper>
   );
-}
+});
