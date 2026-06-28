@@ -5,7 +5,7 @@
  * Improves initial bundle size and load time.
  */
 
-import dynamic from "next/dynamic";
+import dynamic, { type DynamicOptionsLoadingProps } from "next/dynamic";
 import React from "react";
 
 /**
@@ -108,7 +108,7 @@ export const LazyCreateProposalModal = dynamic(
 export function makeLazy<T extends React.ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   options?: {
-    loading?: React.ComponentType;
+    loading?: (loadingProps: DynamicOptionsLoadingProps) => JSX.Element | null;
     ssr?: boolean;
   }
 ): React.ComponentType<React.ComponentProps<T>> {
