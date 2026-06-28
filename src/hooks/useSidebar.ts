@@ -1,42 +1,44 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+
+import { useWorkspace } from '@/workspaces';
 
 const SIDEBAR_STATE_KEY = 'sidebar-open';
 
 export function useSidebar() {
-  // We default to true (open) to match expected dashboard behavior and unit tests.
-  // We use a mount ref to prevent hydration mismatches and unnecessary localStorage writes on first load.
-  const [isOpen, setIsOpen] = useState<boolean>(true);
-  const hasMounted = useRef(false);
+  const { activeWorkspace, updateWorkspace } = useWorkspace();
+  const migratedWorkspaceIds = useRef(new Set<string>());
 
-  // Initialize from localStorage after mounting to avoid hydration mismatch
   useEffect(() => {
+    if (migratedWorkspaceIds.current.has(activeWorkspace.id)) return;
+    migratedWorkspaceIds.current.add(activeWorkspace.id);
+
     try {
       const savedState = localStorage.getItem(SIDEBAR_STATE_KEY);
-      if (savedState !== null) {
-        setIsOpen(JSON.parse(savedState));
+      if (savedState === null) return;
+
+      const migratedState = JSON.parse(savedState);
+      if (typeof migratedState === 'boolean') {
+        updateWorkspace(activeWorkspace.id, { layout: { sidebarOpen: migratedState } });
       }
+      localStorage.removeItem(SIDEBAR_STATE_KEY);
     } catch (error) {
       console.warn('Failed to parse sidebar state from localStorage:', error);
     }
-    // Set mounted flag AFTER we've attempted to load from storage
-    hasMounted.current = true;
-  }, []);
+  }, [activeWorkspace.id, updateWorkspace]);
 
-  // Persist state changes after mount
-  useEffect(() => {
-    // Only save if we have finished mounting (to avoid overriding saved state with default during hydration)
-    if (!hasMounted.current) return;
+  const setSidebarOpen = useCallback(
+    (sidebarOpen: boolean) => {
+      updateWorkspace(activeWorkspace.id, { layout: { sidebarOpen } });
+    },
+    [activeWorkspace.id, updateWorkspace],
+  );
 
-    try {
-      localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(isOpen));
-    } catch (error) {
-      console.warn('Failed to save sidebar state to localStorage:', error);
-    }
-  }, [isOpen]);
+  const toggle = useCallback(
+    () => setSidebarOpen(!activeWorkspace.layout.sidebarOpen),
+    [activeWorkspace.layout.sidebarOpen, setSidebarOpen],
+  );
+  const open = useCallback(() => setSidebarOpen(true), [setSidebarOpen]);
+  const close = useCallback(() => setSidebarOpen(false), [setSidebarOpen]);
 
-  const toggle = () => setIsOpen(prev => !prev);
-  const open = () => setIsOpen(true);
-  const close = () => setIsOpen(false);
-
-  return { isOpen, toggle, open, close };
+  return { isOpen: activeWorkspace.layout.sidebarOpen, toggle, open, close };
 }
