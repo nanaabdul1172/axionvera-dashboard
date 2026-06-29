@@ -1,3 +1,4 @@
+import { getEventIndexer } from '@/indexing/eventIndexer';
 import { mapRawEvents } from './eventMapper';
 import type {
   ActivityEvent,
@@ -170,10 +171,22 @@ export class EventSubscriptionService {
 
   private emitNew(rawEvents: unknown[]): void {
     const events = mapRawEvents(rawEvents as Record<string, unknown>[]);
+    const indexer = getEventIndexer();
+    const newEvents: ActivityEvent[] = [];
+
     for (const event of events) {
       if (this.seenIds.has(event.id)) continue;
       this.rememberId(event.id);
-      this.listeners.forEach((cb) => cb(event));
+      newEvents.push(event);
+    }
+
+    if (newEvents.length > 0) {
+      // Index the events for later querying/analytics
+      indexer.addEvents(newEvents);
+
+      for (const event of newEvents) {
+        this.listeners.forEach((cb) => cb(event));
+      }
     }
   }
 

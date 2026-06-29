@@ -19,6 +19,7 @@ import { GovernanceProvider } from "@/contexts/GovernanceContext";
 import { OfflineProvider } from "@/pwa/OfflineProvider";
 import { WorkspaceProvider } from "@/workspaces";
 import { AssetPreloadEngine } from "@/preload";
+import { ServiceProvider } from "@/providers";
 
 
 function AppInner(props: AppProps) {
@@ -62,18 +63,20 @@ function AppInner(props: AppProps) {
     // fontFamily tokens and any CSS that references them directly.
     <div className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <ErrorBoundary>
-        <WorkspaceProvider>
-          <ThemeProvider>
-            <OfflineProvider>
-              <WalletProvider>
-                <RBACProvider>
-                  <ProvidersInner Component={Component} pageProps={pageProps} />
-                </RBACProvider>
-              </WalletProvider>
-              <Toaster />
-            </OfflineProvider>
-          </ThemeProvider>
-        </WorkspaceProvider>
+        <ServiceProvider>
+          <WorkspaceProvider>
+            <ThemeProvider>
+              <OfflineProvider>
+                <WalletProvider>
+                  <RBACProvider>
+                    <ProvidersInner Component={Component} pageProps={pageProps} />
+                  </RBACProvider>
+                </WalletProvider>
+                <Toaster />
+              </OfflineProvider>
+            </ThemeProvider>
+          </WorkspaceProvider>
+        </ServiceProvider>
       </ErrorBoundary>
     </div>
   );
