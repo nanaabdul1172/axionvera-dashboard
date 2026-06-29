@@ -35,7 +35,7 @@ interface BarChartProps {
   accessibility?: ChartAccessibility;
 }
 
-export function BarChart({
+export const BarChart = React.memo(function BarChart({
   data,
   dataKey = "value",
   labelKey = "label",

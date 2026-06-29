@@ -90,6 +90,22 @@ export const LazyAPYChart = dynamic(
   }
 );
 
+export const LazyNetworkDiagram = dynamic(
+  () => import("@/charts").then((mod) => ({ default: mod.NetworkDiagram })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+);
+
+export const LazyStatisticsBar = dynamic(
+  () => import("@/charts").then((mod) => ({ default: mod.StatisticsBar })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+);
+
 /**
  * Lazy-loaded Modal components.
  * Modals are only loaded when opened.

@@ -41,7 +41,7 @@ interface LineChartProps {
   accessibility?: ChartAccessibility;
 }
 
-export function LineChart({
+export const LineChart = React.memo(function LineChart({
   data,
   dataKey = "value",
   labelKey = "label",
@@ -77,6 +77,7 @@ export function LineChart({
   }, [data, dataKey, showAverage]);
 
   const ChartComponent = isArea ? AreaChart : ReLineChart;
+  const gradientId = `gradient-${dataKey}-${title.replace(/\s+/g, "-")}`;
 
   return (
     <ChartContainer

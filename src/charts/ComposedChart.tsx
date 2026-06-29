@@ -41,7 +41,7 @@ interface ComposedChartProps {
   accessibility?: ChartAccessibility;
 }
 
-export function ComposedChart({
+export const ComposedChart = React.memo(function ComposedChart({
   data,
   series,
   labelKey = "label",

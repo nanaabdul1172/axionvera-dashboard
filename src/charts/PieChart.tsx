@@ -22,7 +22,7 @@ interface PieChartProps {
   accessibility?: ChartAccessibility;
 }
 
-export function PieChart({
+export const PieChart = React.memo(function PieChart({
   data,
   showTooltip = true,
   showLegend = true,
