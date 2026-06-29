@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   BarChart as ReBarChart,
   Bar,
@@ -6,12 +6,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Cell,
 } from "recharts";
-import { useChartTheme } from "@/hooks/useChartTheme";
-import { ChartWrapper } from "./shared/ChartWrapper";
-import { ChartTooltip } from "./shared/ChartTooltip";
+import { ChartContainer, ChartTooltip, useChartTheme, resolveColor } from "@/visualizations";
+import type { ChartAccessibility } from "@/visualizations";
 
 export interface BarChartDataPoint {
   label: string;
@@ -34,15 +32,14 @@ interface BarChartProps {
   barSize?: number;
   radius?: [number, number, number, number];
   title?: string;
-  description?: string;
-  isLoading?: boolean;
+  accessibility?: ChartAccessibility;
 }
 
 export const BarChart = React.memo(function BarChart({
   data,
   dataKey = "value",
   labelKey = "label",
-  color = "#6366f1",
+  color,
   colors,
   showGrid = true,
   showTooltip = true,
@@ -52,57 +49,68 @@ export const BarChart = React.memo(function BarChart({
   className = "",
   barSize = 24,
   radius = [4, 4, 0, 0],
-  title = "Bar chart",
-  description,
-  isLoading = false,
+  title,
+  accessibility,
 }: BarChartProps) {
   const theme = useChartTheme();
 
+  const seriesColor = useMemo(
+    () => color || theme.series[0],
+    [color, theme.series]
+  );
+
   return (
-    <ChartWrapper
+    <ChartContainer
+      data={data}
       title={title}
-      description={description}
-      isLoading={isLoading}
-      isEmpty={data.length === 0}
       height={height}
       className={className}
+      accessibility={accessibility}
     >
-      <ResponsiveContainer width="100%" height={height}>
-        <ReBarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
-          )}
-          <XAxis
-            dataKey={labelKey}
-            tick={{ fontSize: 12, fill: theme.axisTickFill }}
-            axisLine={{ stroke: theme.axisLineStroke }}
-            tickLine={false}
-            minTickGap={30}
+      <ReBarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />}
+        <XAxis
+          dataKey={labelKey}
+          tick={{ fontSize: 12, fill: theme.muted }}
+          axisLine={{ stroke: theme.axis }}
+          tickLine={false}
+          minTickGap={30}
+        />
+        <YAxis
+          tick={{ fontSize: 12, fill: theme.muted }}
+          axisLine={false}
+          tickLine={false}
+          tickFormatter={yAxisFormatter}
+          width={60}
+        />
+        {showTooltip && (
+          <Tooltip
+            content={
+              <ChartTooltip
+                formatter={(value) =>
+                  tooltipFormatter(Number(value))
+                }
+              />
+            }
           />
-          <YAxis
-            tick={{ fontSize: 12, fill: theme.axisTickFill }}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={yAxisFormatter}
-            width={60}
-          />
-          {showTooltip && (
-            <Tooltip
-              content={
-                <ChartTooltip
-                  formatter={(value) => tooltipFormatter(value as number)}
-                />
-              }
-            />
-          )}
-          <Bar dataKey={dataKey} fill={color} barSize={barSize} radius={radius}>
-            {colors &&
-              data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-              ))}
-          </Bar>
-        </ReBarChart>
-      </ResponsiveContainer>
-    </ChartWrapper>
+        )}
+        <Bar dataKey={dataKey} fill={seriesColor} barSize={barSize} radius={radius}>
+          {colors &&
+            data.map((_, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={colors[index % colors.length]}
+              />
+            ))}
+          {!colors &&
+            data.map((_, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={resolveColor(index, theme.series)}
+              />
+            ))}
+        </Bar>
+      </ReBarChart>
+    </ChartContainer>
   );
-});
+}

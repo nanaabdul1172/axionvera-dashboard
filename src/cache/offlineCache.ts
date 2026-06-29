@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   BALANCES: (wallet: string) => `axionvera:cache:balances:${wallet}`,
   TRANSACTIONS: (wallet: string) => `axionvera:cache:transactions:${wallet}`,
   ANALYTICS: (wallet: string) => `axionvera:cache:analytics:${wallet}`,
+  SYNC_QUEUE: "axionvera:cache:syncQueue",
 };
 
 const DEFAULT_TTL = 10 * 60 * 1000; // 10 minutes cache TTL
@@ -86,6 +87,23 @@ export function cacheAnalytics(walletAddress: string, analytics: AnalyticsData):
  */
 export function getCachedAnalytics(walletAddress: string): AnalyticsData | null {
   return getItem<AnalyticsData>(STORAGE_KEYS.ANALYTICS(walletAddress));
+}
+
+export function cacheSyncQueue<T>(queue: T[]): void {
+  setItem(STORAGE_KEYS.SYNC_QUEUE, queue);
+}
+
+export function getCachedSyncQueue<T>(): T[] | null {
+  return getItem<T[]>(STORAGE_KEYS.SYNC_QUEUE);
+}
+
+export function clearSyncQueue(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(STORAGE_KEYS.SYNC_QUEUE);
+  } catch (error) {
+    console.error("[OfflineCache] Failed to clear sync queue:", error);
+  }
 }
 
 /**

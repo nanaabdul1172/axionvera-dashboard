@@ -46,6 +46,17 @@ Object.defineProperty(window, "matchMedia", {
   }))
 });
 
+// Mock ResizeObserver for Recharts ResponsiveContainer in jsdom
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
 // Mock AppTooltip to avoid Radix UI dependency issues in tests
 jest.mock("@/components/AppTooltip", () => ({
   AppTooltip: ({ children }: { children: React.ReactNode }) => children,

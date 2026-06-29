@@ -1,20 +1,12 @@
-import React from "react";
-import {
-  PieChart as RePieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { useChartTheme } from "@/hooks/useChartTheme";
-import { ChartWrapper } from "./shared/ChartWrapper";
-import { ChartTooltip } from "./shared/ChartTooltip";
+import React, { useMemo } from "react";
+import { PieChart as RePieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { ChartContainer, ChartTooltip, useChartTheme } from "@/visualizations";
+import type { ChartAccessibility } from "@/visualizations";
 
 export interface PieChartDataPoint {
   name: string;
   value: number;
-  color: string;
+  color?: string;
 }
 
 interface PieChartProps {
@@ -27,8 +19,7 @@ interface PieChartProps {
   tooltipFormatter?: (value: number, name: string) => [string, string];
   className?: string;
   title?: string;
-  description?: string;
-  isLoading?: boolean;
+  accessibility?: ChartAccessibility;
 }
 
 export const PieChart = React.memo(function PieChart({
@@ -40,55 +31,67 @@ export const PieChart = React.memo(function PieChart({
   outerRadius = 90,
   tooltipFormatter = (value, name) => [value.toFixed(2), name],
   className = "",
-  title = "Pie chart",
-  description,
-  isLoading = false,
+  title,
+  accessibility,
 }: PieChartProps) {
   const theme = useChartTheme();
 
+  const total = useMemo(
+    () => data.reduce((sum, d) => sum + d.value, 0),
+    [data]
+  );
+
   return (
-    <ChartWrapper
+    <ChartContainer
+      data={data}
       title={title}
-      description={description}
-      isLoading={isLoading}
-      isEmpty={data.length === 0}
       height={height}
       className={className}
+      accessibility={accessibility}
     >
-      <ResponsiveContainer width="100%" height={height}>
-        <RePieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={innerRadius}
-            outerRadius={outerRadius}
-            paddingAngle={3}
-            dataKey="value"
-            stroke="none"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
-            ))}
-          </Pie>
-          {showTooltip && (
-            <Tooltip
-              content={
-                <ChartTooltip
-                  formatter={(value, name) =>
-                    tooltipFormatter(value as number, name ?? "")
-                  }
-                />
-              }
+      <RePieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={innerRadius}
+          outerRadius={outerRadius}
+          paddingAngle={3}
+          dataKey="value"
+          stroke={theme.background}
+          strokeWidth={2}
+        >
+          {data.map((entry, index) => (
+            <Cell
+              key={`cell-${index}`}
+              fill={entry.color || theme.series[index % theme.series.length]}
             />
-          )}
-          {showLegend && (
-            <Legend
-              wrapperStyle={{ fontSize: "12px", color: theme.axisTickFill }}
-            />
-          )}
-        </RePieChart>
-      </ResponsiveContainer>
-    </ChartWrapper>
+          ))}
+        </Pie>
+        {showTooltip && (
+          <Tooltip
+            content={
+              <ChartTooltip
+                formatter={(value, name) => {
+                  const [formattedValue, formattedName] = tooltipFormatter(
+                    Number(value),
+                    String(name)
+                  );
+                  return `${formattedValue} (${formattedName})`;
+                }}
+              />
+            }
+          />
+        )}
+        {showLegend && (
+          <Legend
+            wrapperStyle={{ fontSize: "12px", color: theme.foreground }}
+            formatter={(value) => (
+              <span style={{ color: theme.foreground }}>{value}</span>
+            )}
+          />
+        )}
+      </RePieChart>
+    </ChartContainer>
   );
-});
+}

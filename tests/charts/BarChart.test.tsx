@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { LineChart } from "@/charts/LineChart";
+import { BarChart } from "@/charts/BarChart";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const sampleData = [
@@ -8,23 +8,23 @@ const sampleData = [
   { label: "B", value: 20 },
 ];
 
-describe("LineChart", () => {
+describe("BarChart", () => {
   function renderChart(props = {}) {
     return render(
       <ThemeProvider>
-        <LineChart data={sampleData} title="Line Chart" {...props} />
+        <BarChart data={sampleData} title="Bar Chart" {...props} />
       </ThemeProvider>
     );
   }
 
   it("renders the chart title", () => {
     renderChart();
-    expect(screen.getByText("Line Chart")).toBeInTheDocument();
+    expect(screen.getByText("Bar Chart")).toBeInTheDocument();
   });
 
   it("renders as an accessible image", () => {
-    renderChart({ accessibility: { label: "Line chart summary" } });
-    expect(screen.getByRole("img", { name: "Line chart summary" })).toBeInTheDocument();
+    renderChart({ accessibility: { label: "Bar chart summary" } });
+    expect(screen.getByRole("img", { name: "Bar chart summary" })).toBeInTheDocument();
   });
 
   it("renders empty state when data is empty", () => {

@@ -1,30 +1,30 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { LineChart } from "@/charts/LineChart";
+import { PieChart } from "@/charts/PieChart";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const sampleData = [
-  { label: "A", value: 10 },
-  { label: "B", value: 20 },
+  { name: "A", value: 10, color: "#6366f1" },
+  { name: "B", value: 20, color: "#10b981" },
 ];
 
-describe("LineChart", () => {
+describe("PieChart", () => {
   function renderChart(props = {}) {
     return render(
       <ThemeProvider>
-        <LineChart data={sampleData} title="Line Chart" {...props} />
+        <PieChart data={sampleData} title="Pie Chart" {...props} />
       </ThemeProvider>
     );
   }
 
   it("renders the chart title", () => {
     renderChart();
-    expect(screen.getByText("Line Chart")).toBeInTheDocument();
+    expect(screen.getByText("Pie Chart")).toBeInTheDocument();
   });
 
   it("renders as an accessible image", () => {
-    renderChart({ accessibility: { label: "Line chart summary" } });
-    expect(screen.getByRole("img", { name: "Line chart summary" })).toBeInTheDocument();
+    renderChart({ accessibility: { label: "Pie chart summary" } });
+    expect(screen.getByRole("img", { name: "Pie chart summary" })).toBeInTheDocument();
   });
 
   it("renders empty state when data is empty", () => {

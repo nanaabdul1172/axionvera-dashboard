@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ComposedChart as ReComposedChart,
   Line,
@@ -7,19 +7,17 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Legend,
 } from "recharts";
-import { useChartTheme } from "@/hooks/useChartTheme";
-import { ChartWrapper } from "./shared/ChartWrapper";
-import { ChartTooltip } from "./shared/ChartTooltip";
+import { ChartContainer, ChartTooltip, useChartTheme } from "@/visualizations";
+import type { ChartAccessibility } from "@/visualizations";
 
 export interface ComposedDataPoint {
   label: string;
   [key: string]: string | number;
 }
 
-interface SeriesConfig {
+export interface SeriesConfig {
   key: string;
   type: "line" | "bar";
   color: string;
@@ -40,8 +38,7 @@ interface ComposedChartProps {
   tooltipFormatter?: (value: number, name: string) => [string, string];
   className?: string;
   title?: string;
-  description?: string;
-  isLoading?: boolean;
+  accessibility?: ChartAccessibility;
 }
 
 export const ComposedChart = React.memo(function ComposedChart({
@@ -56,96 +53,95 @@ export const ComposedChart = React.memo(function ComposedChart({
   yAxisFormatterRight = (v) => v.toFixed(2),
   tooltipFormatter = (value, name) => [value.toFixed(4), name],
   className = "",
-  title = "Composed chart",
-  description,
-  isLoading = false,
+  title,
+  accessibility,
 }: ComposedChartProps) {
   const theme = useChartTheme();
-  const hasRightAxis = series.some((s) => s.yAxisId === "right");
+  const hasRightAxis = useMemo(
+    () => series.some((s) => s.yAxisId === "right"),
+    [series]
+  );
 
   return (
-    <ChartWrapper
+    <ChartContainer
+      data={data}
       title={title}
-      description={description}
-      isLoading={isLoading}
-      isEmpty={data.length === 0}
       height={height}
       className={className}
+      accessibility={accessibility}
     >
-      <ResponsiveContainer width="100%" height={height}>
-        <ReComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
-          )}
-          <XAxis
-            dataKey={labelKey}
-            tick={{ fontSize: 12, fill: theme.axisTickFill }}
-            axisLine={{ stroke: theme.axisLineStroke }}
-            tickLine={false}
-            minTickGap={30}
-          />
+      <ReComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />}
+        <XAxis
+          dataKey={labelKey}
+          tick={{ fontSize: 12, fill: theme.muted }}
+          axisLine={{ stroke: theme.axis }}
+          tickLine={false}
+          minTickGap={30}
+        />
+        <YAxis
+          yAxisId="left"
+          tick={{ fontSize: 12, fill: theme.muted }}
+          axisLine={false}
+          tickLine={false}
+          tickFormatter={yAxisFormatterLeft}
+          width={60}
+        />
+        {hasRightAxis && (
           <YAxis
-            yAxisId="left"
-            tick={{ fontSize: 12, fill: theme.axisTickFill }}
+            yAxisId="right"
+            orientation="right"
+            tick={{ fontSize: 12, fill: theme.muted }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={yAxisFormatterLeft}
+            tickFormatter={yAxisFormatterRight}
             width={60}
           />
-          {hasRightAxis && (
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={{ fontSize: 12, fill: theme.axisTickFill }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={yAxisFormatterRight}
-              width={60}
-            />
-          )}
-          {showTooltip && (
-            <Tooltip
-              content={
-                <ChartTooltip
-                  formatter={(value, name) =>
-                    tooltipFormatter(value as number, name ?? "")
-                  }
-                />
-              }
-            />
-          )}
-          {showLegend && (
-            <Legend
-              wrapperStyle={{ fontSize: "12px", color: theme.axisTickFill }}
-            />
-          )}
-          {series.map((s) =>
-            s.type === "line" ? (
-              <Line
-                key={s.key}
-                type="monotone"
-                dataKey={s.key}
-                stroke={s.color}
-                strokeWidth={2}
-                yAxisId={s.yAxisId || "left"}
-                name={s.name}
-                dot={false}
-                activeDot={{ r: 4, fill: s.color, stroke: "#fff", strokeWidth: 2 }}
+        )}
+        {showTooltip && (
+          <Tooltip
+            content={
+              <ChartTooltip
+                formatter={(value, name) => {
+                  const [v, n] = tooltipFormatter(Number(value), String(name));
+                  return `${v} (${n})`;
+                }}
               />
-            ) : (
-              <Bar
-                key={s.key}
-                dataKey={s.key}
-                fill={s.color}
-                yAxisId={s.yAxisId || "left"}
-                name={s.name}
-                barSize={20}
-                radius={[4, 4, 0, 0]}
-              />
-            )
-          )}
-        </ReComposedChart>
-      </ResponsiveContainer>
-    </ChartWrapper>
+            }
+          />
+        )}
+        {showLegend && (
+          <Legend
+            wrapperStyle={{ fontSize: "12px", color: theme.foreground }}
+            formatter={(value) => <span style={{ color: theme.foreground }}>{value}</span>}
+          />
+        )}
+        {series.map((s) =>
+          s.type === "line" ? (
+            <Line
+              key={s.key}
+              type="monotone"
+              dataKey={s.key}
+              stroke={s.color}
+              strokeWidth={2}
+              yAxisId={s.yAxisId || "left"}
+              name={s.name}
+              dot={false}
+              activeDot={{ r: 4, fill: s.color, stroke: theme.background, strokeWidth: 2 }}
+            />
+          ) : (
+            <Bar
+              key={s.key}
+              dataKey={s.key}
+              fill={s.color}
+              yAxisId={s.yAxisId || "left"}
+              name={s.name}
+              barSize={20}
+              radius={[4, 4, 0, 0]}
+            />
+          )
+        )}
+      </ReComposedChart>
+    </ChartContainer>
   );
-});
+}
