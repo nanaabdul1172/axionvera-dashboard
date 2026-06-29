@@ -34,7 +34,6 @@ export {
 // Types
 export type {
   UserRole,
-  Permission,
   RouteAccess,
   UserWithRole,
   PermissionCheckResult,

@@ -8,13 +8,13 @@
 import type {
   TimeSeriesDataPoint,
   PeriodMetrics,
-  TimePeriod,
   VaultPerformance,
   RewardAnalytics,
   FlowAnalytics,
   APYAnalytics,
   ParticipationMetrics,
 } from "@/types/analytics";
+import { TimePeriod } from "@/types/analytics";
 
 /**
  * Calculate basic statistics for a dataset.

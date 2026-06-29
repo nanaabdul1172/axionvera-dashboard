@@ -1,4 +1,36 @@
 import "@testing-library/jest-dom";
+import React from "react";
+
+// ResizeObserver is not available in jsdom — required by Recharts ResponsiveContainer
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
+// URL.createObjectURL is not available in jsdom — required by chartExport
+global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
+global.URL.revokeObjectURL = jest.fn();
+
+// Render Recharts ResponsiveContainer at a fixed size so chart children mount
+jest.mock("recharts", () => {
+  const Recharts = jest.requireActual("recharts");
+  return {
+    ...Recharts,
+    ResponsiveContainer: ({
+      children,
+    }: {
+      children: React.ReactNode;
+      width?: number | string;
+      height?: number | string;
+    }) =>
+      React.createElement(
+        "div",
+        { style: { width: 400, height: 300 }, "data-testid": "responsive-container" },
+        children
+      ),
+  };
+});
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -12,6 +44,17 @@ Object.defineProperty(window, "matchMedia", {
     removeListener: jest.fn(),
     dispatchEvent: jest.fn()
   }))
+});
+
+// Mock ResizeObserver for Recharts ResponsiveContainer in jsdom
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
 });
 
 // Mock AppTooltip to avoid Radix UI dependency issues in tests

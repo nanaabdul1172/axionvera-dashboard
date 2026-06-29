@@ -8,8 +8,8 @@
 import type {
   TimeSeriesDataPoint,
   AnalyticsFilter,
-  TimePeriod,
 } from "@/types/analytics";
+import { TimePeriod } from "@/types/analytics";
 
 /**
  * Get date range for a time period.

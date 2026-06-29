@@ -18,6 +18,7 @@ import {
 import { NETWORK, AXIONVERA_VAULT_CONTRACT_ID } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
 import { useSorobanEvents } from "@/hooks/useSorobanEvents";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import {
   cacheBalances,
   getCachedBalances,
@@ -97,6 +98,33 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
   const [state, setState] = useState<VaultState>(INITIAL_STATE);
   const walletRef = useRef(walletAddress);
   walletRef.current = walletAddress;
+
+  const handleSyncAction = useCallback(async (action: { type: VaultActionType; payload: { amount: string; walletAddress: string } }) => {
+    if (!action.payload.walletAddress) {
+      throw new Error("Connect a wallet to synchronize pending actions.");
+    }
+
+    if (action.type === "deposit") {
+      const tx = await sdk.deposit({ walletAddress: action.payload.walletAddress, network: NETWORK, amount: action.payload.amount });
+      setState((s) => updateAction(s, action.type, { status: "success", hash: tx.hash ?? null, error: null, lastAmount: action.payload.amount }));
+      notify.success("Deposit Confirmed", `Transaction hash: ${tx.hash ?? "N/A"}`);
+    } else if (action.type === "withdraw") {
+      const tx = await sdk.withdraw({ walletAddress: action.payload.walletAddress, network: NETWORK, amount: action.payload.amount });
+      setState((s) => updateAction(s, action.type, { status: "success", hash: tx.hash ?? null, error: null, lastAmount: action.payload.amount }));
+      notify.success("Withdrawal Confirmed", `Transaction hash: ${tx.hash ?? "N/A"}`);
+    }
+
+    await refresh();
+    await refreshAnalytics();
+  }, [sdk]);
+
+  const { isOnline, queueAction } = useOfflineSync({
+    storageKey: "axionvera:vault:syncQueue",
+    onSync: handleSyncAction,
+    onConflict: (_action, error) => {
+      notify.warning("Sync Conflict", error.message);
+    },
+  });
 
   const refresh = useCallback(async () => {
     if (!walletRef.current) {
@@ -188,6 +216,12 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
       return;
     }
     const pending = createPending(type, amount);
+    if (!isOnline) {
+      queueAction({ type, payload: { amount, walletAddress: walletRef.current } });
+      setState((s) => ({ ...updateAction(s, type, { status: "pending", hash: null, error: null, lastAmount: amount }), isSubmitting: false, error: null, transactions: upsert(s.transactions, pending) }));
+      notify.info("Offline Mode", "Your action is queued and will sync automatically when connectivity resumes.");
+      return;
+    }
     setState((s) => ({ ...updateAction(s, type, { status: "pending", hash: null, error: null, lastAmount: amount }), isSubmitting: true, error: null, transactions: upsert(s.transactions, pending) }));
     try {
       const tx = await execute(amount);
@@ -201,7 +235,7 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
     } finally {
       setState((s) => ({ ...s, isSubmitting: false }));
     }
-  }, [refresh]);
+  }, [isOnline, queueAction, refresh]);
 
   const deposit = useCallback((amountInput: string) =>
     runAction("deposit", amountInput, (amount) =>

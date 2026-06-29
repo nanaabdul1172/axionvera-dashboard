@@ -5,7 +5,7 @@
  * Improves initial bundle size and load time.
  */
 
-import dynamic from "next/dynamic";
+import dynamic, { type DynamicOptionsLoadingProps } from "next/dynamic";
 import React from "react";
 
 /**
@@ -90,6 +90,22 @@ export const LazyAPYChart = dynamic(
   }
 );
 
+export const LazyNetworkDiagram = dynamic(
+  () => import("@/charts").then((mod) => ({ default: mod.NetworkDiagram })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+);
+
+export const LazyStatisticsBar = dynamic(
+  () => import("@/charts").then((mod) => ({ default: mod.StatisticsBar })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+);
+
 /**
  * Lazy-loaded Modal components.
  * Modals are only loaded when opened.
@@ -108,7 +124,7 @@ export const LazyCreateProposalModal = dynamic(
 export function makeLazy<T extends React.ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   options?: {
-    loading?: React.ComponentType;
+    loading?: (loadingProps: DynamicOptionsLoadingProps) => JSX.Element | null;
     ssr?: boolean;
   }
 ): React.ComponentType<React.ComponentProps<T>> {
