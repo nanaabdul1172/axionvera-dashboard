@@ -9,8 +9,8 @@ import type {
   AnalyticsData,
   AnalyticsFilter,
   TimeSeriesDataPoint,
-  TimePeriod,
 } from "@/types/analytics";
+import { TimePeriod } from "@/types/analytics";
 import {
   calculateVaultPerformance,
   calculateRewardAnalytics,

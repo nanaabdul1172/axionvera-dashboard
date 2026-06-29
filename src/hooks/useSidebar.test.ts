@@ -1,69 +1,83 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement } from 'react';
+import type { ReactNode } from 'react';
+
+import { WorkspaceProvider, WORKSPACE_STORAGE_KEY, WorkspaceStore } from '@/workspaces';
+
 import { useSidebar } from './useSidebar';
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-};
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
+function createMemoryStorage(initial: Record<string, string> = {}) {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: jest.fn((key: string) => data.get(key) ?? null),
+    setItem: jest.fn((key: string, value: string) => {
+      data.set(key, value);
+    }),
+    removeItem: jest.fn((key: string) => {
+      data.delete(key);
+    }),
+    clear: jest.fn(() => {
+      data.clear();
+    }),
+    read: (key: string) => data.get(key) ?? null,
+  };
+}
 
 describe('useSidebar', () => {
-  beforeEach(() => {
-    localStorageMock.getItem.mockClear();
-    localStorageMock.setItem.mockClear();
-  });
+  function renderSidebarHook(storage = createMemoryStorage()) {
+    Object.defineProperty(window, 'localStorage', {
+      value: storage,
+      configurable: true,
+    });
 
-  it('should default to open state when no saved state exists', () => {
-    localStorageMock.getItem.mockReturnValue(null);
-    
-    const { result } = renderHook(() => useSidebar());
-    
+    const store = new WorkspaceStore(storage);
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(WorkspaceProvider, { store, children });
+
+    return {
+      storage,
+      store,
+      ...renderHook(() => useSidebar(), { wrapper }),
+    };
+  }
+
+  it('defaults to the active workspace sidebar state', () => {
+    const { result } = renderSidebarHook();
+
     expect(result.current.isOpen).toBe(true);
   });
 
-  it('should load saved state from localStorage', async () => {
-    localStorageMock.getItem.mockReturnValue('false');
-    
-    const { result } = renderHook(() => useSidebar());
-    
+  it('migrates the legacy sidebar key into the active workspace', async () => {
+    const storage = createMemoryStorage({ 'sidebar-open': 'false' });
+
+    const { result, store } = renderSidebarHook(storage);
+
     await waitFor(() => expect(result.current.isOpen).toBe(false));
-    expect(localStorageMock.getItem).toHaveBeenCalledWith('sidebar-open');
+    expect(store.getActiveWorkspace().layout.sidebarOpen).toBe(false);
+    expect(storage.removeItem).toHaveBeenCalledWith('sidebar-open');
   });
 
-  it('should save state to localStorage when changed', async () => {
-    localStorageMock.getItem.mockReturnValue('true');
-    
-    const { result } = renderHook(() => useSidebar());
-    
-    await waitFor(() => expect(result.current.isOpen).toBe(true));
+  it('persists toggles in workspace storage', async () => {
+    const { result, storage, store } = renderSidebarHook();
 
     act(() => {
       result.current.toggle();
     });
-    
-    expect(result.current.isOpen).toBe(false);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('sidebar-open', 'false');
+
+    await waitFor(() => expect(result.current.isOpen).toBe(false));
+    expect(store.getActiveWorkspace().layout.sidebarOpen).toBe(false);
+
+    const persistedState = JSON.parse(storage.read(WORKSPACE_STORAGE_KEY) ?? '{}');
+    expect(persistedState.workspaces[0].layout.sidebarOpen).toBe(false);
+    expect(storage.setItem).toHaveBeenCalledWith(
+      WORKSPACE_STORAGE_KEY,
+      expect.stringContaining('"sidebarOpen":false'),
+    );
   });
 
-  it('should provide toggle, open, and close functions', () => {
-    localStorageMock.getItem.mockReturnValue('true');
-    
-    const { result } = renderHook(() => useSidebar());
-    
-    expect(typeof result.current.toggle).toBe('function');
-    expect(typeof result.current.open).toBe('function');
-    expect(typeof result.current.close).toBe('function');
-  });
-
-  it('should handle open and close functions correctly', async () => {
-    localStorageMock.getItem.mockReturnValue('false');
-    
-    const { result } = renderHook(() => useSidebar());
+  it('provides toggle, open, and close actions', async () => {
+    const storage = createMemoryStorage({ 'sidebar-open': 'false' });
+    const { result } = renderSidebarHook(storage);
 
     await waitFor(() => expect(result.current.isOpen).toBe(false));
 
@@ -71,12 +85,12 @@ describe('useSidebar', () => {
       result.current.open();
     });
     expect(result.current.isOpen).toBe(true);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('sidebar-open', 'true');
-    
+
     act(() => {
       result.current.close();
     });
     expect(result.current.isOpen).toBe(false);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('sidebar-open', 'false');
+
+    expect(typeof result.current.toggle).toBe('function');
   });
 });

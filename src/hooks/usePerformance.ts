@@ -4,7 +4,13 @@
  * React hooks for performance monitoring and optimization.
  */
 
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type DependencyList,
+} from "react";
 import { performanceMonitor, MetricType } from "@/utils/performance";
 
 /**
@@ -151,9 +157,9 @@ export function useSlowRenderDetection(
 /**
  * Hook for lazy initialization of expensive values.
  */
-export function useLazyMemo<T>(factory: () => T, deps: React.DependencyList): T {
+export function useLazyMemo<T>(factory: () => T, deps: DependencyList): T {
   const valueRef = useRef<T | null>(null);
-  const depsRef = useRef<React.DependencyList | null>(null);
+  const depsRef = useRef<DependencyList | null>(null);
 
   if (
     valueRef.current === null ||
@@ -172,10 +178,10 @@ export function useLazyMemo<T>(factory: () => T, deps: React.DependencyList): T 
  */
 export function useAsyncMemo<T>(
   factory: () => Promise<T>,
-  deps: React.DependencyList,
+  deps: DependencyList,
   initialValue: T
 ): T {
-  const [value, setValue] = React.useState<T>(initialValue);
+  const [value, setValue] = useState<T>(initialValue);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,16 +200,13 @@ export function useAsyncMemo<T>(
   return value;
 }
 
-// Workaround for React import
-const React = require("react");
-
 /**
  * Hook to batch state updates.
  */
 export function useBatchedState<T>(
   initialState: T
 ): [T, (update: Partial<T>) => void, () => void] {
-  const [state, setState] = React.useState<T>(initialState);
+  const [state, setState] = useState<T>(initialState);
   const pendingUpdates = useRef<Partial<T>[]>([]);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -247,9 +250,9 @@ export function useWebWorker<TInput, TOutput>(
   loading: boolean;
   error: Error | null;
 } {
-  const [result, setResult] = React.useState<TOutput | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<Error | null>(null);
+  const [result, setResult] = useState<TOutput | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import type { ReactNode, ReactElement } from "react";
 
 import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { WorkspaceProvider, WorkspaceStore } from "@/workspaces";
 
 jest.mock("next/link", () => ({
   __esModule: true,
@@ -16,7 +17,17 @@ jest.mock("next/link", () => ({
 
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: ({ src, alt, ...props }: { src: string; alt: string; [k: string]: unknown }) => (
+  default: ({
+    src,
+    alt,
+    priority: _priority,
+    ...props
+  }: {
+    src: string;
+    alt: string;
+    priority?: boolean;
+    [k: string]: unknown;
+  }) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={alt} {...(props as object)} />
   ),
@@ -44,7 +55,18 @@ const mockAvailableWallets = [
 
 describe("Navbar", () => {
   function renderNavbar(ui: ReactElement) {
-    return render(<ThemeProvider>{ui}</ThemeProvider>);
+    const storage = {
+      getItem: jest.fn(() => null),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+    };
+    const store = new WorkspaceStore(storage);
+
+    return render(
+      <WorkspaceProvider store={store}>
+        <ThemeProvider>{ui}</ThemeProvider>
+      </WorkspaceProvider>
+    );
   }
 
   test("shows connect button when disconnected", async () => {
