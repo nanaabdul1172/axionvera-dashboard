@@ -32,6 +32,9 @@ export async function mockWalletContext(
   const mockConfig = { ...DEFAULT_MOCK_CONFIG, ...config };
 
   await page.addInitScript((config) => {
+    // Keep middleware auth check in sync with mocked wallet connection state.
+    document.cookie = `hasWallet=${config.isConnected ? 'true' : 'false'}; path=/`;
+
     // Mock Freighter API
     (window as any).freighter = {
       isConnected: async () => config.isConnected,
@@ -58,8 +61,8 @@ export async function mockWalletContext(
       isConnecting: false,
       error: null,
       walletType: config.isConnected ? config.walletType : null,
-      connect: async () => {},
-      disconnect: () => {},
+      connect: async () => { },
+      disconnect: () => { },
     };
   }, mockConfig);
 }
@@ -75,6 +78,8 @@ export async function mockWalletForContext(
   const mockConfig = { ...DEFAULT_MOCK_CONFIG, ...config };
 
   await context.addInitScript((config) => {
+    document.cookie = `hasWallet=${config.isConnected ? 'true' : 'false'}; path=/`;
+
     (window as any).freighter = {
       isConnected: async () => config.isConnected,
       isAllowed: async () => config.isConnected,
@@ -99,8 +104,8 @@ export async function mockWalletForContext(
       isConnecting: false,
       error: null,
       walletType: config.isConnected ? config.walletType : null,
-      connect: async () => {},
-      disconnect: () => {},
+      connect: async () => { },
+      disconnect: () => { },
     };
   }, mockConfig);
 }
