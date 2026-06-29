@@ -7,6 +7,8 @@ import { APYHistoryPanel } from "./APYHistoryPanel";
 import { FlowPanel } from "./FlowPanel";
 import { ParticipationPanel } from "./ParticipationPanel";
 import { Skeleton } from "@/components/Skeleton";
+import { ProtocolInsightsPanel } from "@/components/insights/ProtocolInsightsPanel";
+import { useProtocolInsights } from "@/hooks/useProtocolInsights";
 import { RefreshCw, BarChart3, TrendingUp, PiggyBank, Users } from "lucide-react";
 
 type TabKey = "rewards" | "apy" | "flows" | "participation";
@@ -27,6 +29,7 @@ export function AnalyticsDashboard() {
     transactions: vault.transactions,
     walletAddress: wallet.publicKey,
   });
+  const insights = useProtocolInsights(analytics);
 
   if (!wallet.isConnected) {
     return (
@@ -95,6 +98,14 @@ export function AnalyticsDashboard() {
           Refresh
         </button>
       </div>
+
+      {insights ? (
+        <ProtocolInsightsPanel
+          insights={insights}
+          isRefreshing={isLoading}
+          onRefresh={() => void refresh()}
+        />
+      ) : null}
 
       <div className="flex flex-wrap gap-2 border-b border-slate-700/50 pb-1">
         {TABS.map((tab) => (
