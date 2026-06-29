@@ -18,6 +18,8 @@ import { emit } from "@/observability/diagnostics";
 import { GovernanceProvider } from "@/contexts/GovernanceContext";
 import { OfflineProvider } from "@/pwa/OfflineProvider";
 import { WorkspaceProvider } from "@/workspaces";
+import { AssetPreloadEngine } from "@/preload";
+import { ServiceProvider } from "@/providers";
 
 
 function AppInner(props: AppProps) {
@@ -29,10 +31,31 @@ function AppInner(props: AppProps) {
   }, []);
 
   useEffect(() => {
-    const handleRouteChange = (url: string) => emit('page_view', { url });
+    const preloader = new AssetPreloadEngine({ router });
+    preloader.preloadForRoute(router.pathname);
+
+    let finishNavigationTiming: (() => number) | undefined;
+    const handleRouteStart = () => {
+      finishNavigationTiming = preloader.trackNavigationStart();
+    };
+    const handleRouteChange = (url: string) => {
+      const preloadLatencyMs = finishNavigationTiming?.();
+      finishNavigationTiming = undefined;
+      emit('page_view', {
+        url,
+        preloadLatencyMs,
+        preloadMetrics: preloader.getMetrics(),
+      });
+      preloader.preloadForRoute(url.split('?')[0] || url);
+    };
+
+    router.events.on('routeChangeStart', handleRouteStart);
     router.events.on('routeChangeComplete', handleRouteChange);
-    return () => router.events.off('routeChangeComplete', handleRouteChange);
-  }, [router.events]);
+    return () => {
+      router.events.off('routeChangeStart', handleRouteStart);
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
 
   return (
     // Apply CSS-variable font classes to the root so the custom properties
@@ -40,18 +63,20 @@ function AppInner(props: AppProps) {
     // fontFamily tokens and any CSS that references them directly.
     <div className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <ErrorBoundary>
-        <WorkspaceProvider>
-          <ThemeProvider>
-            <OfflineProvider>
-              <WalletProvider>
-                <RBACProvider>
-                  <ProvidersInner Component={Component} pageProps={pageProps} />
-                </RBACProvider>
-              </WalletProvider>
-              <Toaster />
-            </OfflineProvider>
-          </ThemeProvider>
-        </WorkspaceProvider>
+        <ServiceProvider>
+          <WorkspaceProvider>
+            <ThemeProvider>
+              <OfflineProvider>
+                <WalletProvider>
+                  <RBACProvider>
+                    <ProvidersInner Component={Component} pageProps={pageProps} />
+                  </RBACProvider>
+                </WalletProvider>
+                <Toaster />
+              </OfflineProvider>
+            </ThemeProvider>
+          </WorkspaceProvider>
+        </ServiceProvider>
       </ErrorBoundary>
     </div>
   );

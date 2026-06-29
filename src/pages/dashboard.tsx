@@ -1,16 +1,19 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
 
-import BalanceCard from "@/components/BalanceCard";
-import DepositForm from "@/components/DepositForm";
+import {
+  MemoizedBalanceCard,
+  MemoizedDepositForm,
+  MemoizedWithdrawForm,
+  MemoizedTransactionHistory,
+  MemoizedAnalyticsDashboard
+} from "@/components/optimized";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
-import TransactionHistory from "@/components/TransactionHistory";
-import WithdrawForm from "@/components/WithdrawForm";
-import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 import { useEffect, useState } from "react";
 import { useVaultContext } from "@/contexts/VaultContext";
 import { useWalletContext } from "@/hooks/useWallet";
+import { RenderBoundary } from "@/rendering";
 
 export default function DashboardPage() {
   const wallet = useWalletContext();
@@ -50,73 +53,98 @@ export default function DashboardPage() {
             {/* Balance + Forms Row */}
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
               <div className="col-span-1 lg:col-span-1 w-full">
-                <BalanceCard
-                  isConnected={wallet.isConnected}
-                  publicKey={wallet.publicKey}
-                  balance={vault.balance}
-                  rewards={vault.rewards}
-                  isLoading={vault.isLoading}
-                  error={vault.error}
-                  onRefresh={vault.refresh}
-                />
+                <RenderBoundary
+                  name="balance-section"
+                  dependencies={[wallet.isConnected, wallet.publicKey, vault.balance, vault.rewards, vault.isLoading, vault.error]}
+                >
+                  <MemoizedBalanceCard
+                    isConnected={wallet.isConnected}
+                    publicKey={wallet.publicKey}
+                    balance={vault.balance}
+                    rewards={vault.rewards}
+                    isLoading={vault.isLoading}
+                    error={vault.error}
+                    onRefresh={vault.refresh}
+                  />
+                </RenderBoundary>
               </div>
               <div className="col-span-1 lg:col-span-2 w-full">
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                  <DepositForm
-                    isConnected={wallet.isConnected}
-                    isSubmitting={vault.isSubmitting}
-                    onDeposit={vault.deposit}
-                    status={vault.depositStatus}
-                    walletBalance={wallet.balance ? parseFloat(wallet.balance) : null}
-                    walletAddress={wallet.publicKey}
-                    statusMessage={
-                      vault.depositStatus === "pending"
-                        ? `Depositing ${vault.lastDepositAmount ?? "0"} tokens into the vault.`
-                        : vault.depositStatus === "success"
-                          ? `Successfully deposited ${vault.lastDepositAmount ?? "0"} tokens.`
-                          : vault.depositStatus === "error"
-                            ? vault.depositError
-                            : null
-                    }
-                    transactionHash={vault.depositHash}
-                  />
-                  <WithdrawForm
-                    isConnected={wallet.isConnected}
-                    isSubmitting={vault.isSubmitting}
-                    balance={vault.balance}
-                    onWithdraw={vault.withdraw}
-                    status={vault.withdrawStatus}
-                    statusMessage={
-                      vault.withdrawStatus === "pending"
-                        ? `Withdrawing ${vault.lastWithdrawAmount ?? "0"} tokens from the vault.`
-                        : vault.withdrawStatus === "success"
-                          ? `Successfully withdrew ${vault.lastWithdrawAmount ?? "0"} tokens.`
-                          : vault.withdrawStatus === "error"
-                            ? vault.withdrawError
-                            : null
-                    }
-                    transactionHash={vault.withdrawHash}
-                    walletAddress={wallet.publicKey}
-                  />
+                  <RenderBoundary
+                    name="deposit-section"
+                    dependencies={[wallet.isConnected, vault.isSubmitting, vault.depositStatus, wallet.balance, wallet.publicKey, vault.lastDepositAmount, vault.depositError, vault.depositHash]}
+                  >
+                    <MemoizedDepositForm
+                      isConnected={wallet.isConnected}
+                      isSubmitting={vault.isSubmitting}
+                      onDeposit={vault.deposit}
+                      status={vault.depositStatus}
+                      walletBalance={wallet.balance ? parseFloat(wallet.balance) : null}
+                      walletAddress={wallet.publicKey}
+                      statusMessage={
+                        vault.depositStatus === "pending"
+                          ? `Depositing ${vault.lastDepositAmount ?? "0"} tokens into the vault.`
+                          : vault.depositStatus === "success"
+                            ? `Successfully deposited ${vault.lastDepositAmount ?? "0"} tokens.`
+                            : vault.depositStatus === "error"
+                              ? vault.depositError
+                              : null
+                      }
+                      transactionHash={vault.depositHash}
+                    />
+                  </RenderBoundary>
+                  <RenderBoundary
+                    name="withdraw-section"
+                    dependencies={[wallet.isConnected, vault.isSubmitting, vault.balance, vault.withdrawStatus, vault.lastWithdrawAmount, vault.withdrawError, vault.withdrawHash, wallet.publicKey]}
+                  >
+                    <MemoizedWithdrawForm
+                      isConnected={wallet.isConnected}
+                      isSubmitting={vault.isSubmitting}
+                      balance={vault.balance}
+                      onWithdraw={vault.withdraw}
+                      status={vault.withdrawStatus}
+                      statusMessage={
+                        vault.withdrawStatus === "pending"
+                          ? `Withdrawing ${vault.lastWithdrawAmount ?? "0"} tokens from the vault.`
+                          : vault.withdrawStatus === "success"
+                            ? `Successfully withdrew ${vault.lastWithdrawAmount ?? "0"} tokens.`
+                            : vault.withdrawStatus === "error"
+                              ? vault.withdrawError
+                              : null
+                      }
+                      transactionHash={vault.withdrawHash}
+                      walletAddress={wallet.publicKey}
+                    />
+                  </RenderBoundary>
                 </div>
               </div>
             </div>
 
             {/* Analytics Dashboard — Full Width */}
             <div className="w-full">
-              <AnalyticsDashboard />
+              <RenderBoundary
+                name="analytics-section"
+                dependencies={[wallet.isConnected, wallet.publicKey, vault.transactions]}
+              >
+                <MemoizedAnalyticsDashboard />
+              </RenderBoundary>
             </div>
 
             {/* Transaction History — Full Width */}
             <div className="w-full overflow-x-auto">
-              <TransactionHistory
-                isConnected={wallet.isConnected}
-                publicKey={wallet.publicKey}
-                isLoading={vault.isLoading}
-                transactions={vault.transactions}
-                onClaimRewards={vault.claimRewards}
-                isClaiming={vault.isClaiming}
-              />
+              <RenderBoundary
+                name="transactions-section"
+                dependencies={[wallet.isConnected, wallet.publicKey, vault.isLoading, vault.transactions, vault.isClaiming]}
+              >
+                <MemoizedTransactionHistory
+                  isConnected={wallet.isConnected}
+                  publicKey={wallet.publicKey}
+                  isLoading={vault.isLoading}
+                  transactions={vault.transactions}
+                  onClaimRewards={vault.claimRewards}
+                  isClaiming={vault.isClaiming}
+                />
+              </RenderBoundary>
             </div>
           </div>
         </div>
