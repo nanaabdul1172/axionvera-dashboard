@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  DEFAULT_PROTOCOL_HEALTH_POLL_MS,
-  getProtocolHealthSnapshot,
-  type ProtocolHealthSnapshot,
-} from "@/services/protocolHealth";
+import { SERVICE_TOKENS } from "@/core";
+import { useServiceContainer } from "@/providers";
+import { DEFAULT_PROTOCOL_HEALTH_POLL_MS, type ProtocolHealthSnapshot } from "@/services/protocolHealth";
 
 type ProtocolHealthState = {
   snapshot: ProtocolHealthSnapshot | null;
@@ -18,12 +16,14 @@ export function useProtocolHealth(pollIntervalMs = DEFAULT_PROTOCOL_HEALTH_POLL_
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isMounted = useRef(false);
+  const services = useServiceContainer();
+  const protocolHealthService = services.resolve(SERVICE_TOKENS.protocolHealth);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const nextSnapshot = await getProtocolHealthSnapshot();
+      const nextSnapshot = await protocolHealthService.getProtocolHealthSnapshot();
       if (isMounted.current) {
         setSnapshot(nextSnapshot);
       }
@@ -36,7 +36,7 @@ export function useProtocolHealth(pollIntervalMs = DEFAULT_PROTOCOL_HEALTH_POLL_
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [protocolHealthService]);
 
   useEffect(() => {
     isMounted.current = true;
