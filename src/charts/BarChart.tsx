@@ -113,4 +113,4 @@ export const BarChart = React.memo(function BarChart({
       </ReBarChart>
     </ChartContainer>
   );
-}
+});

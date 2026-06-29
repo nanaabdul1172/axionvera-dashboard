@@ -77,7 +77,6 @@ export const LineChart = React.memo(function LineChart({
   }, [data, dataKey, showAverage]);
 
   const ChartComponent = isArea ? AreaChart : ReLineChart;
-  const gradientId = `gradient-${dataKey}-${title.replace(/\s+/g, "-")}`;
 
   return (
     <ChartContainer
@@ -164,4 +163,4 @@ export const LineChart = React.memo(function LineChart({
       </ChartComponent>
     </ChartContainer>
   );
-}
+});
