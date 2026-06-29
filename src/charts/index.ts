@@ -11,6 +11,7 @@ export { PieChart } from "./PieChart";
 export type { PieChartDataPoint } from "./PieChart";
 
 export { default as HealthLatencyBars } from "./HealthLatencyBars";
+export { ForecastChart } from "./ForecastChart";
 
 export { NetworkDiagram } from "./NetworkDiagram";
 export type { NetworkNode, NetworkEdge } from "./NetworkDiagram";
@@ -18,9 +19,9 @@ export type { NetworkNode, NetworkEdge } from "./NetworkDiagram";
 export { StatisticsBar } from "./StatisticsBar";
 
 export {
-  ChartTooltip,
-  ChartSkeleton,
-  ChartErrorBoundary,
-  ChartEmptyState,
-  ChartWrapper,
+    ChartTooltip,
+    ChartSkeleton,
+    ChartErrorBoundary,
+    ChartEmptyState,
+    ChartWrapper,
 } from "./shared";

@@ -1,5 +1,4 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { createElement } from 'react';
 import type { ReactNode } from 'react';
 
 import { WorkspaceProvider, WORKSPACE_STORAGE_KEY, WorkspaceStore } from '@/workspaces';
@@ -31,8 +30,9 @@ describe('useSidebar', () => {
     });
 
     const store = new WorkspaceStore(storage);
-    const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(WorkspaceProvider, { store }, children);
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <WorkspaceProvider store={store}>{children}</WorkspaceProvider>
+    );
 
     return {
       storage,
