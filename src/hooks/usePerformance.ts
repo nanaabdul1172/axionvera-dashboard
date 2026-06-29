@@ -50,12 +50,14 @@ export function useMeasureAsync<T extends (...args: any[]) => Promise<any>>(
   name: string,
   asyncFn: T
 ): T {
-  return useCallback(
-    (async (...args: Parameters<T>) => {
+  const wrapped = useCallback(
+    async (...args: Parameters<T>) => {
       return performanceMonitor.measureAsync(name, MetricType.API_CALL, () => asyncFn(...args));
-    }) as T,
+    },
     [name, asyncFn]
   );
+
+  return wrapped as T;
 }
 
 /**
@@ -195,6 +197,7 @@ export function useAsyncMemo<T>(
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return value;

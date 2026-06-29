@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * @module utils/performance
  *
@@ -339,15 +341,11 @@ export function getMemoryUsage(): {
  * Log component render count (for debugging).
  */
 export function useRenderCount(componentName: string): void {
-  if (process.env.NODE_ENV !== "development") return;
-
   const renderCount = React.useRef(0);
 
   React.useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
     renderCount.current += 1;
     console.log(`${componentName} rendered ${renderCount.current} times`);
   });
 }
-
-// Workaround for React import in utility file
-const React = typeof window !== "undefined" ? require("react") : { useRef: () => ({}), useEffect: () => {} };

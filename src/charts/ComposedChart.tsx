@@ -144,4 +144,4 @@ export const ComposedChart = React.memo(function ComposedChart({
       </ReComposedChart>
     </ChartContainer>
   );
-}
+});

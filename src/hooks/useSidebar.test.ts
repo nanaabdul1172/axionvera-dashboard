@@ -32,7 +32,7 @@ describe('useSidebar', () => {
 
     const store = new WorkspaceStore(storage);
     const wrapper = ({ children }: { children: ReactNode }) =>
-      createElement(WorkspaceProvider, { store, children });
+      createElement(WorkspaceProvider, { store }, children);
 
     return {
       storage,

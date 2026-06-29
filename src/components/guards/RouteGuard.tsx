@@ -131,28 +131,31 @@ export function withRouteGuard<P extends object>(
   const GuardedComponent = (props: P) => {
     const router = useRouter();
     const { user } = useRBAC();
+    const fallback = options?.fallback;
+    const redirectPath = options?.redirectTo ?? "/";
 
     // Get route config from ROUTE_ACCESS_CONFIG
     const routeConfig = getRouteAccess(router.pathname);
+    const accessResult = routeConfig
+      ? canAccessRoute(user, routeConfig)
+      : { granted: true };
+
+    useEffect(() => {
+      if (!routeConfig) return;
+      if (!accessResult.granted && !fallback) {
+        router.push(redirectPath);
+      }
+    }, [accessResult.granted, fallback, redirectPath, routeConfig, router]);
 
     // If no config found, allow access (default behavior)
     if (!routeConfig) {
       return <Component {...props} />;
     }
 
-    // Check access
-    const accessResult = canAccessRoute(user, routeConfig);
-
-    useEffect(() => {
-      if (!accessResult.granted && !options?.fallback) {
-        router.push(options?.redirectTo ?? "/");
-      }
-    }, [accessResult.granted, router]);
-
     // Access denied
     if (!accessResult.granted) {
-      if (options?.fallback) {
-        return <>{options.fallback}</>;
+      if (fallback) {
+        return <>{fallback}</>;
       }
       return options?.loadingComponent ? <>{options.loadingComponent}</> : null;
     }
