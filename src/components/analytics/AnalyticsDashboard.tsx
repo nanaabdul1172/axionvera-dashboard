@@ -8,6 +8,8 @@ import { FlowPanel } from "./FlowPanel";
 import { ParticipationPanel } from "./ParticipationPanel";
 import { Skeleton } from "@/components/Skeleton";
 import { RenderBoundary } from "@/rendering";
+import { ProtocolInsightsPanel } from "@/components/insights/ProtocolInsightsPanel";
+import { useProtocolInsights } from "@/hooks/useProtocolInsights";
 import { RefreshCw, BarChart3, TrendingUp, PiggyBank, Users } from "lucide-react";
 
 type TabKey = "rewards" | "apy" | "flows" | "participation";
@@ -83,6 +85,7 @@ export function AnalyticsDashboard() {
     transactions: vault.transactions,
     walletAddress: wallet.publicKey,
   });
+  const insights = useProtocolInsights(analytics);
 
   if (!wallet.isConnected) {
     return (
@@ -155,6 +158,30 @@ export function AnalyticsDashboard() {
           onTabChange={setActiveTab}
         />
       </RenderBoundary>
+      {insights ? (
+        <ProtocolInsightsPanel
+          insights={insights}
+          isRefreshing={isLoading}
+          onRefresh={() => void refresh()}
+        />
+      ) : null}
+
+      <div className="flex flex-wrap gap-2 border-b border-slate-700/50 pb-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-colors ${
+              activeTab === tab.key
+                ? "bg-slate-700/50 text-white border-b-2 border-indigo-500"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <div className="min-h-[400px]">
         <RenderBoundary
