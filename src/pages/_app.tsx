@@ -17,6 +17,7 @@ import { initTelemetry } from "@/utils/telemetry";
 import { emit } from "@/observability/diagnostics";
 import { GovernanceProvider } from "@/contexts/GovernanceContext";
 import { OfflineProvider } from "@/pwa/OfflineProvider";
+import { WorkspaceProvider } from "@/workspaces";
 
 
 function AppInner(props: AppProps) {
@@ -39,16 +40,18 @@ function AppInner(props: AppProps) {
     // fontFamily tokens and any CSS that references them directly.
     <div className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <ErrorBoundary>
-        <ThemeProvider>
-          <OfflineProvider>
-            <WalletProvider>
-              <RBACProvider>
-                <ProvidersInner Component={Component} pageProps={pageProps} router={router} />
-              </RBACProvider>
-            </WalletProvider>
-            <Toaster />
-          </OfflineProvider>
-        </ThemeProvider>
+        <WorkspaceProvider>
+          <ThemeProvider>
+            <OfflineProvider>
+              <WalletProvider>
+                <RBACProvider>
+                  <ProvidersInner Component={Component} pageProps={pageProps} />
+                </RBACProvider>
+              </WalletProvider>
+              <Toaster />
+            </OfflineProvider>
+          </ThemeProvider>
+        </WorkspaceProvider>
       </ErrorBoundary>
     </div>
   );
@@ -58,7 +61,7 @@ function AppInner(props: AppProps) {
  * Inner wrapper that has access to the WalletContext, so it can pass
  * `walletAddress` down to GovernanceProvider and VaultProvider.
  */
-function ProvidersInner({ Component, pageProps }: AppProps) {
+function ProvidersInner({ Component, pageProps }: Pick<AppProps, "Component" | "pageProps">) {
   const wallet = useWalletContext();
   return (
     <GovernanceProvider walletAddress={wallet.publicKey}>

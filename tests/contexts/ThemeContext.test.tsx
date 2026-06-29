@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
-import userEvent from '@testing-library/user-event';
+import { WorkspaceProvider, WORKSPACE_STORAGE_KEY, WorkspaceStore } from '@/workspaces';
 
 interface MockMediaQueryList extends MediaQueryList {
   triggerChange: (newMatches: boolean) => void;
@@ -63,6 +63,23 @@ const TestComponent = () => {
   );
 };
 
+function createMemoryStorage(initial: Record<string, string> = {}) {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: jest.fn((key: string) => data.get(key) ?? null),
+    setItem: jest.fn((key: string, value: string) => {
+      data.set(key, value);
+    }),
+    removeItem: jest.fn((key: string) => {
+      data.delete(key);
+    }),
+    clear: jest.fn(() => {
+      data.clear();
+    }),
+    read: (key: string) => data.get(key) ?? null,
+  };
+}
+
 describe('ThemeContext', () => {
   let matchMediaMock: any;
 
@@ -116,7 +133,6 @@ describe('ThemeContext', () => {
   });
 
   it('updates theme and localStorage when setTheme is called', async () => {
-    const user = userEvent.setup({ delay: null });
     render(
       <ThemeProvider>
         <TestComponent />
@@ -130,6 +146,31 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme').textContent).toBe('dark');
     expect(screen.getByTestId('resolved').textContent).toBe('dark');
     expect(localStorage.getItem('theme-preference')).toBe('dark');
+  });
+
+  it('migrates legacy theme preference into the active workspace', async () => {
+    const storage = createMemoryStorage({ 'theme-preference': 'dark' });
+    Object.defineProperty(window, 'localStorage', {
+      value: storage,
+      configurable: true,
+    });
+    const store = new WorkspaceStore(storage);
+
+    render(
+      <WorkspaceProvider store={store}>
+        <ThemeProvider>
+          <TestComponent />
+        </ThemeProvider>
+      </WorkspaceProvider>
+    );
+
+    await screen.findByTestId('theme');
+    expect(screen.getByTestId('theme').textContent).toBe('dark');
+    expect(store.getActiveWorkspace().preferences.theme).toBe('dark');
+    expect(storage.removeItem).toHaveBeenCalledWith('theme-preference');
+
+    const persistedState = JSON.parse(storage.read(WORKSPACE_STORAGE_KEY) ?? '{}');
+    expect(persistedState.workspaces[0].preferences.theme).toBe('dark');
   });
 
   it('updates resolved theme when system preference changes', async () => {
