@@ -94,4 +94,4 @@ export const PieChart = React.memo(function PieChart({
       </RePieChart>
     </ChartContainer>
   );
-}
+});
