@@ -1,8 +1,8 @@
 import type {
   EventListener,
-  EventSubscriptionService,
   StatusListener,
 } from './types';
+import type { EventSubscriptionService } from './eventSubscriptionService';
 
 export interface EventStreamHandlers {
   onEvent: EventListener;

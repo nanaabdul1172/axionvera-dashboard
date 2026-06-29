@@ -19,6 +19,7 @@ import { NETWORK, AXIONVERA_VAULT_CONTRACT_ID } from "@/utils/networkConfig";
 import { notify } from "@/utils/notifications";
 import { useSorobanEvents } from "@/hooks/useSorobanEvents";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
+import type { SyncAction } from "@/sync/offlineSync";
 import {
   cacheBalances,
   getCachedBalances,
@@ -99,33 +100,6 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
   const walletRef = useRef(walletAddress);
   walletRef.current = walletAddress;
 
-  const handleSyncAction = useCallback(async (action: { type: VaultActionType; payload: { amount: string; walletAddress: string } }) => {
-    if (!action.payload.walletAddress) {
-      throw new Error("Connect a wallet to synchronize pending actions.");
-    }
-
-    if (action.type === "deposit") {
-      const tx = await sdk.deposit({ walletAddress: action.payload.walletAddress, network: NETWORK, amount: action.payload.amount });
-      setState((s) => updateAction(s, action.type, { status: "success", hash: tx.hash ?? null, error: null, lastAmount: action.payload.amount }));
-      notify.success("Deposit Confirmed", `Transaction hash: ${tx.hash ?? "N/A"}`);
-    } else if (action.type === "withdraw") {
-      const tx = await sdk.withdraw({ walletAddress: action.payload.walletAddress, network: NETWORK, amount: action.payload.amount });
-      setState((s) => updateAction(s, action.type, { status: "success", hash: tx.hash ?? null, error: null, lastAmount: action.payload.amount }));
-      notify.success("Withdrawal Confirmed", `Transaction hash: ${tx.hash ?? "N/A"}`);
-    }
-
-    await refresh();
-    await refreshAnalytics();
-  }, [sdk]);
-
-  const { isOnline, queueAction } = useOfflineSync({
-    storageKey: "axionvera:vault:syncQueue",
-    onSync: handleSyncAction,
-    onConflict: (_action, error) => {
-      notify.warning("Sync Conflict", error.message);
-    },
-  });
-
   const refresh = useCallback(async () => {
     if (!walletRef.current) {
       setState((s) => ({ ...s, balance: "0", rewards: "0", transactions: [], error: null }));
@@ -186,6 +160,36 @@ export function VaultProvider({ children, walletAddress, sdk: providedSdk }: Vau
     refresh();
     refreshAnalytics();
   }, [refresh, refreshAnalytics]);
+
+  const handleSyncAction = useCallback(async (action: SyncAction<{ amount: string; walletAddress: string }>) => {
+    if (!action.payload.walletAddress) {
+      throw new Error("Connect a wallet to synchronize pending actions.");
+    }
+
+    if (action.type === "deposit") {
+      const tx = await sdk.deposit({ walletAddress: action.payload.walletAddress, network: NETWORK, amount: action.payload.amount });
+      setState((s) => updateAction(s, "deposit", { status: "success", hash: tx.hash ?? null, error: null, lastAmount: action.payload.amount }));
+      notify.success("Deposit Confirmed", `Transaction hash: ${tx.hash ?? "N/A"}`);
+    } else if (action.type === "withdraw") {
+      const tx = await sdk.withdraw({ walletAddress: action.payload.walletAddress, network: NETWORK, amount: action.payload.amount });
+      setState((s) => updateAction(s, "withdraw", { status: "success", hash: tx.hash ?? null, error: null, lastAmount: action.payload.amount }));
+      notify.success("Withdrawal Confirmed", `Transaction hash: ${tx.hash ?? "N/A"}`);
+    } else if (action.type === "claim") {
+      await sdk.claimRewards({ walletAddress: action.payload.walletAddress, network: NETWORK });
+      notify.success("Rewards Claimed", "Successfully synchronized queued reward claim.");
+    }
+
+    await refresh();
+    await refreshAnalytics();
+  }, [refresh, refreshAnalytics, sdk]);
+
+  const { isOnline, queueAction } = useOfflineSync({
+    storageKey: "axionvera:vault:syncQueue",
+    onSync: handleSyncAction,
+    onConflict: (_action, error) => {
+      notify.warning("Sync Conflict", error.message);
+    },
+  });
 
   useSorobanEvents({
     contractId: AXIONVERA_VAULT_CONTRACT_ID,

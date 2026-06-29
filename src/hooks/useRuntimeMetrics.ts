@@ -39,8 +39,8 @@ export function useAsyncTiming<T extends (...args: never[]) => Promise<unknown>>
   name: string,
   asyncFn: T
 ): T {
-  return useCallback(
-    (async (...args: Parameters<T>) => {
+  const wrapped = useCallback(
+    async (...args: Parameters<T>) => {
       startMark(name);
       try {
         const result = await asyncFn(...args);
@@ -50,9 +50,11 @@ export function useAsyncTiming<T extends (...args: never[]) => Promise<unknown>>
         endMark(name, { error: String(err) });
         throw err;
       }
-    }) as T,
+    },
     [name, asyncFn]
   );
+
+  return wrapped as T;
 }
 
 export function useMetricsSnapshot(refreshMs: number = 3000): {

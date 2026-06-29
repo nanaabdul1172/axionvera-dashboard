@@ -137,6 +137,16 @@ export function withRouteGuard<P extends object>(
 
     // Get route config from ROUTE_ACCESS_CONFIG
     const routeConfig = getRouteAccess(router.pathname);
+    const accessResult = routeConfig
+      ? canAccessRoute(user, routeConfig)
+      : { granted: true };
+
+    useEffect(() => {
+      if (!routeConfig) return;
+      if (!accessResult.granted && !fallback) {
+        router.push(redirectPath);
+      }
+    }, [accessResult.granted, fallback, redirectPath, routeConfig, router]);
 
     // If no config found, allow access (default behavior)
     if (!routeConfig) {

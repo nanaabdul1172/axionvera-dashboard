@@ -6,8 +6,8 @@ const STATUS_META: Record<
 > = {
   idle: {
     label: "Idle",
-    dot: "bg-text-secondary",
-    className: "border-border-primary bg-background-secondary/30 text-text-secondary",
+    dot: "bg-slate-400",
+    className: "border-[var(--color-border-primary)] bg-[color:color-mix(in_srgb,var(--color-bg-secondary)_80%,transparent)] text-[var(--color-text-secondary)]",
   },
   connecting: {
     label: "Connecting",
@@ -26,8 +26,8 @@ const STATUS_META: Record<
   },
   disconnected: {
     label: "Disconnected",
-    dot: "bg-text-secondary",
-    className: "border-border-primary bg-background-secondary/30 text-text-secondary",
+    dot: "bg-slate-400",
+    className: "border-[var(--color-border-primary)] bg-[color:color-mix(in_srgb,var(--color-bg-secondary)_80%,transparent)] text-[var(--color-text-secondary)]",
   },
   error: {
     label: "Connection error",
@@ -47,7 +47,7 @@ export default function ConnectionStatusBadge({
     <span
       role="status"
       aria-live="polite"
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${meta.className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm ${meta.className}`}
     >
       <span className={`h-2 w-2 rounded-full ${meta.dot}`} aria-hidden="true" />
       {meta.label}
