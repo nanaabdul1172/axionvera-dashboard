@@ -49,3 +49,16 @@ export {
   type RetryExecutorOptions,
   type RetryExecutorResult
 } from './retry';
+
+// Runtime diagnostics and recovery lifecycle
+export {
+  createRecoveryDiagnostic,
+  recordRecoveryDiagnostic,
+  updateRecoveryLifecycle,
+  getRecoveryDiagnostics,
+  clearRecoveryDiagnostics,
+  buildRuntimeRecoveryState,
+  type RecoveryActionType,
+  type RecoveryDiagnostic,
+  type RuntimeRecoveryState
+} from './diagnostics';
