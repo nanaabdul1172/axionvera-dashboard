@@ -27,6 +27,7 @@ The AxionVera dashboard includes a comprehensive analytics and visualization sys
 - **Smoothing & Sampling**: Optimize large datasets
 - **Interactive Charts**: Hover for details, click to drill down
 - **Export Functionality**: CSV and JSON formats
+- **Predictive Forecasting**: Forward-looking projections with confidence intervals
 
 ---
 
@@ -170,6 +171,52 @@ interface VaultPerformance {
 ---
 
 ### Calculations
+
+### Forecasting Methodology
+
+The predictive engine uses deterministic, client-side models over historical protocol metrics.
+
+- **Linear Trend**: least-squares regression over time-indexed observations
+- **Moving Average**: trailing window baseline smoothing
+- **Ensemble**: average of linear trend and moving average projections
+
+The default model is **Ensemble** for improved stability under noisy data.
+
+#### Forecast Inputs
+
+- Balance history
+- Reward history
+- APY history
+- Net flow history
+
+#### Forecast Outputs
+
+- Point predictions for selected horizon (7d, 30d, 90d)
+- Lower and upper confidence bounds
+- Aggregate confidence score and confidence tier
+
+#### Confidence Scoring
+
+Confidence is derived from in-sample fit error and observed volatility:
+
+```
+normalizedRMSE = RMSE / |mean(history)|
+volatilityScore = stdDev(history) / |mean(history)|
+confidence = clamp(1 - 0.6 * normalizedRMSE - 0.4 * volatilityScore, 0.05, 0.98)
+```
+
+Confidence tiers:
+
+- **High**: confidence ≥ 0.75
+- **Medium**: 0.50 ≤ confidence < 0.75
+- **Low**: confidence < 0.50
+
+#### Assumptions
+
+- Forecasts are based only on historical on-platform metrics.
+- External market factors are not modeled.
+- Uncertainty bands widen as forecast distance increases.
+- Forecasts are directional analytics, not financial advice.
 
 #### Performance Metrics
 

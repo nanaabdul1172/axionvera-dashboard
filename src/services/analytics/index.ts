@@ -18,6 +18,7 @@ import {
   calculateAPYAnalytics,
   calculateParticipationMetrics,
 } from "./calculations";
+import { generateAnalyticsForecasts } from "./forecasting";
 import {
   applyFilter,
   filterByPeriod,
@@ -193,12 +194,20 @@ export async function fetchAnalyticsData(
 
   const participation = calculateParticipationMetrics(transactions);
 
+  const forecasts = generateAnalyticsForecasts({
+    balanceHistory: performance.balanceHistory,
+    rewardHistory: rewards.rewardHistory,
+    apyHistory: apy.history,
+    flowHistory: flow.flowHistory,
+  });
+
   return {
     performance,
     rewards,
     flow,
     apy,
     participation,
+    forecasts,
     lastUpdated: Date.now(),
   };
 }
@@ -311,3 +320,4 @@ export async function exportAnalyticsData(
 // Re-export utilities for convenience
 export * from "./calculations";
 export * from "./filters";
+export * from "./forecasting";

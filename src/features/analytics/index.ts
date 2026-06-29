@@ -6,3 +6,4 @@
  */
 
 export { AnalyticsDashboard } from "./AnalyticsDashboard";
+export { ForecastInsightsPanel } from "./ForecastInsightsPanel";
