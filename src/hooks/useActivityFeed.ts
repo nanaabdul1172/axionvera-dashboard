@@ -4,35 +4,13 @@ import {
   getEventSubscriptionService,
   type EventSubscriptionService,
 } from '@/services/events';
+import { subscribeSharedEventStream } from '@/services/events/sharedStreamLifecycle';
 
 export interface UseActivityFeedOptions {
   /** Start streaming on mount (default true). */
   enabled?: boolean;
   /** Inject a service instance (tests / storybook). Defaults to the singleton. */
   service?: EventSubscriptionService;
-}
-
-// Module-level bridge + refcount so the shared service is connected to the
-// shared store exactly once, regardless of how many components use the hook,
-// and is stopped only when the last consumer unmounts.
-let consumers = 0;
-let unbind: (() => void) | null = null;
-
-function startBridge(service: EventSubscriptionService): void {
-  if (unbind) return;
-  const offEvent = service.onEvent((event) => activityStore.addEvent(event));
-  const offStatus = service.onStatusChange((status) => activityStore.setStatus(status));
-  service.start();
-  unbind = () => {
-    offEvent();
-    offStatus();
-    service.stop();
-  };
-}
-
-function stopBridge(): void {
-  unbind?.();
-  unbind = null;
 }
 
 /**
@@ -52,16 +30,10 @@ export function useActivityFeed(options: UseActivityFeedOptions = {}) {
   useEffect(() => {
     if (!enabled) return;
     const svc = service ?? getEventSubscriptionService();
-    consumers += 1;
-    startBridge(svc);
-
-    return () => {
-      consumers -= 1;
-      if (consumers <= 0) {
-        consumers = 0;
-        stopBridge();
-      }
-    };
+    return subscribeSharedEventStream(svc, {
+      onEvent: (event) => activityStore.addEvent(event),
+      onStatusChange: (status) => activityStore.setStatus(status),
+    });
   }, [enabled, service]);
 
   const clear = useCallback(() => activityStore.clear(), []);

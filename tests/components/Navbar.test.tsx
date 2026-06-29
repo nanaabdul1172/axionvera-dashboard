@@ -6,6 +6,19 @@ import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WorkspaceProvider, WorkspaceStore } from "@/workspaces";
 
+jest.mock("@/hooks/useNotifications", () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    filter: { category: "all", read: "all" },
+    markAsRead: jest.fn(),
+    markAllAsRead: jest.fn(),
+    dismiss: jest.fn(),
+    dismissAllVisible: jest.fn(),
+    setFilter: jest.fn(),
+  }),
+}));
+
 jest.mock("next/link", () => ({
   __esModule: true,
   default: ({ href, children, ...props }: { href: string; children: ReactNode }) => (

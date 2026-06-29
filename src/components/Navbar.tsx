@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSidebar } from "@/hooks/useSidebar";
 import { shortenAddress } from "@/utils/contractHelpers";
 import ThemeToggle from "./ThemeToggle";
+import { NotificationCenter } from "@/components/notifications";
 import { WalletId, WalletMeta } from "@/types/wallet";
 import { WorkspaceSwitcher } from "@/workspaces";
 
