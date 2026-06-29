@@ -152,3 +152,13 @@ export function getMinimumRole(pathname: string): UserRole {
   const routeAccess = getRouteAccess(pathname);
   return routeAccess?.minRole ?? UserRole.GUEST;
 }
+
+/**
+ * Check if a path is registered in the route table.
+ *
+ * @param pathname - The route path to check
+ * @returns True if the route exists in route access config
+ */
+export function isKnownRoute(pathname: string): boolean {
+  return Boolean(getRouteAccess(pathname));
+}
