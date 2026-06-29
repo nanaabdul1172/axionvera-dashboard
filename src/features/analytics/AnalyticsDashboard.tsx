@@ -5,10 +5,11 @@
  * Provides an interactive interface for exploring vault performance data.
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { PerformanceChart, FlowChart, APYChart } from "@/components/visualizations";
 import { TimePeriod, type AnalyticsData } from "@/types/analytics";
 import { fetchAnalyticsData } from "@/services/analytics";
+import { ForecastInsightsPanel } from "./ForecastInsightsPanel";
 import {
   formatCurrency,
   formatPercentage,
@@ -258,6 +259,8 @@ export function AnalyticsDashboard({
           />
         </div>
       </div>
+
+      <ForecastInsightsPanel forecasts={analyticsData.forecasts} />
 
       {/* Participation Metrics */}
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6">

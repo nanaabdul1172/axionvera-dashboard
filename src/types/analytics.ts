@@ -43,6 +43,24 @@ export enum ChartType {
 }
 
 /**
+ * Forecast model types supported by the analytics engine.
+ */
+export enum ForecastModel {
+  MOVING_AVERAGE = "moving_average",
+  LINEAR_TREND = "linear_trend",
+  ENSEMBLE = "ensemble",
+}
+
+/**
+ * Forecast horizon for projection windows.
+ */
+export enum ForecastHorizon {
+  WEEK = "7d",
+  MONTH = "30d",
+  QUARTER = "90d",
+}
+
+/**
  * Time series data point with timestamp and value.
  */
 export interface TimeSeriesDataPoint {
@@ -54,6 +72,71 @@ export interface TimeSeriesDataPoint {
   value: number;
   /** Optional secondary values */
   [key: string]: number | string;
+}
+
+/**
+ * Forecast point with confidence interval.
+ */
+export interface ForecastPoint extends TimeSeriesDataPoint {
+  /** Forecasted value */
+  predicted: number;
+  /** Lower confidence bound */
+  lowerBound: number;
+  /** Upper confidence bound */
+  upperBound: number;
+  /** Point-level confidence score (0-1) */
+  confidence: number;
+}
+
+/**
+ * Forecast confidence tier for simplified display.
+ */
+export type ForecastConfidenceTier = "high" | "medium" | "low";
+
+/**
+ * Metadata about forecast assumptions and quality.
+ */
+export interface ForecastMetadata {
+  /** Data points used to train the forecast */
+  dataPointsUsed: number;
+  /** Volatility score derived from historical variation */
+  volatilityScore: number;
+  /** Root mean square error from in-sample fitting */
+  rmse: number;
+  /** Chosen model */
+  model: ForecastModel;
+  /** Method assumptions for transparency */
+  assumptions: string[];
+}
+
+/**
+ * Metric-specific forecast payload.
+ */
+export interface MetricForecast {
+  /** Metric identifier (balance, rewards, etc.) */
+  metric: "balance" | "rewards" | "apy" | "net_flow";
+  /** Forecast horizon */
+  horizon: ForecastHorizon;
+  /** Historical points used as model input */
+  historical: TimeSeriesDataPoint[];
+  /** Forecast points */
+  forecast: ForecastPoint[];
+  /** Aggregate confidence score (0-1) */
+  confidence: number;
+  /** Confidence tier for UI */
+  confidenceTier: ForecastConfidenceTier;
+  /** Quality and model metadata */
+  metadata: ForecastMetadata;
+}
+
+/**
+ * Forecast collection for major analytics metrics.
+ */
+export interface AnalyticsForecasts {
+  performance: MetricForecast;
+  rewards: MetricForecast;
+  apy: MetricForecast;
+  flow: MetricForecast;
 }
 
 /**
@@ -198,6 +281,8 @@ export interface AnalyticsData {
   apy: APYAnalytics;
   /** Participation metrics */
   participation: ParticipationMetrics;
+  /** Forward-looking forecasts by metric */
+  forecasts: AnalyticsForecasts;
   /** Last updated timestamp */
   lastUpdated: number;
 }
