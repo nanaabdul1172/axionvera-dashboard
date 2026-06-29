@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatAmount, shortenAddress } from "@/utils/contractHelpers";
+import { transformTrackedValue, extractValue } from "@/utils/provenance";
+import type { MaybeTracked } from "@/types/provenance";
+import { ProvenanceViewer } from "./diagnostics/ProvenanceViewer";
 import { StatisticsSkeleton } from "./Skeletons";
 import { AppTooltip } from "./AppTooltip";
 import { GLOSSARY } from "@/utils/glossary";
@@ -7,8 +10,8 @@ import { GLOSSARY } from "@/utils/glossary";
 type BalanceCardProps = {
   isConnected: boolean;
   publicKey: string | null;
-  balance: string;
-  rewards: string;
+  balance: MaybeTracked<string>;
+  rewards: MaybeTracked<string>;
   isLoading: boolean;
   error: string | null;
   onRefresh: () => Promise<void>;
@@ -53,6 +56,20 @@ export default function BalanceCard({
 
   const isFetching = isLoading || isRefreshing;
 
+  const displayBalanceTracked = transformTrackedValue(
+    balance,
+    "formatAmount",
+    "BalanceCard",
+    (val) => formatAmount(val)
+  );
+
+  const displayRewardsTracked = transformTrackedValue(
+    rewards,
+    "formatAmount",
+    "BalanceCard",
+    (val) => formatAmount(val)
+  );
+
   if (isFetching && !balance) return <StatisticsSkeleton />;
 
   return (
@@ -94,8 +111,9 @@ export default function BalanceCard({
                 </AppTooltip>
               </div>
               <div className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">
-                {formatAmount(balance)}
+                {extractValue(displayBalanceTracked)}
               </div>
+              <ProvenanceViewer trackedValue={displayBalanceTracked} />
             </>
           )}
         </div>
@@ -107,11 +125,12 @@ export default function BalanceCard({
             <>
               <div className="text-xs text-text-muted">Pending Rewards</div>
               <div className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">
-                {formatAmount(rewards)}
+                {extractValue(displayRewardsTracked)}
               </div>
               <div className="mt-1 text-xs text-text-muted">
                 Claim rewards to add them to your balance.
               </div>
+              <ProvenanceViewer trackedValue={displayRewardsTracked} />
             </>
           )}
         </div>
