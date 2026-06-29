@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
+import { useOptionalWorkspace } from '@/workspaces';
+
 type Theme = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
+const LEGACY_THEME_KEY = 'theme-preference';
 
 interface ThemeContextType {
   theme: Theme;
@@ -12,17 +15,35 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const workspaceContext = useOptionalWorkspace();
+  const hasWorkspace = Boolean(workspaceContext);
+  const workspaceId = workspaceContext?.activeWorkspace.id;
+  const workspaceTheme = workspaceContext?.activeWorkspace.preferences.theme;
+  const updateWorkspace = workspaceContext?.updateWorkspace;
   const [theme, setThemeState] = useState<Theme>('system');
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme-preference') as Theme | null;
-    if (savedTheme) {
-      setThemeState(savedTheme);
+    if (hasWorkspace && workspaceId && updateWorkspace) {
+      const savedTheme = localStorage.getItem(LEGACY_THEME_KEY) as Theme | null;
+      if (isTheme(savedTheme)) {
+        setThemeState(savedTheme);
+        updateWorkspace(workspaceId, {
+          preferences: { theme: savedTheme },
+        });
+        localStorage.removeItem(LEGACY_THEME_KEY);
+      } else {
+        setThemeState(workspaceTheme ?? 'system');
+      }
+    } else {
+      const savedTheme = localStorage.getItem(LEGACY_THEME_KEY) as Theme | null;
+      if (isTheme(savedTheme)) {
+        setThemeState(savedTheme);
+      }
     }
     setMounted(true);
-  }, []);
+  }, [hasWorkspace, updateWorkspace, workspaceId, workspaceTheme]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -50,7 +71,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme-preference', newTheme);
+    if (workspaceContext) {
+      workspaceContext.updateWorkspace(workspaceContext.activeWorkspace.id, {
+        preferences: { theme: newTheme },
+      });
+    } else {
+      localStorage.setItem(LEGACY_THEME_KEY, newTheme);
+    }
   };
 
   return (
@@ -58,6 +85,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeContext.Provider>
   );
+}
+
+function isTheme(value: unknown): value is Theme {
+  return value === 'light' || value === 'dark' || value === 'system';
 }
 
 export function useTheme() {

@@ -1,2 +1,4 @@
 {
+    "chat.restoreLastPanelSession": true,
+    "chat.agent.sandbox.allowAutoApprove": true
 }

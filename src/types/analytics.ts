@@ -40,6 +40,8 @@ export enum ChartType {
   BAR = "bar",
   COMPOSED = "composed",
   PIE = "pie",
+  NETWORK = "network",
+  STATISTICS = "statistics",
 }
 
 /**
