@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { notify } from "@/utils/notifications";
 import { emit } from "@/observability/diagnostics";
+import { createTrackedValue } from "@/utils/provenance";
 
 import {
   createAxionveraVaultSdk,
@@ -289,8 +290,8 @@ export function useVault({ walletAddress, sdk: providedSdk }: UseVaultArgs) {
   }, [refresh, sdk, walletAddress]);
 
   return {
-    balance: state.balance,
-    rewards: state.rewards,
+    balance: createTrackedValue(state.balance, "API: AxionveraVaultSdk.getBalances"),
+    rewards: createTrackedValue(state.rewards, "API: AxionveraVaultSdk.getBalances"),
     transactions: state.transactions,
     isLoading: state.isLoading,
     isSubmitting: state.isSubmitting,
