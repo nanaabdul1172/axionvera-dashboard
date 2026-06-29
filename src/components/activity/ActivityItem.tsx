@@ -25,7 +25,7 @@ const TYPE_META: Record<ActivityType, { label: string; icon: string; className: 
   unknown: {
     label: "Event",
     icon: "•",
-    className: "border-border-primary bg-background-secondary/30 text-text-secondary",
+    className: "border-[var(--color-border-primary)] bg-[color:color-mix(in_srgb,var(--color-bg-secondary)_80%,transparent)] text-[var(--color-text-secondary)]",
   },
 };
 
@@ -39,7 +39,7 @@ export default function ActivityItem({ event }: { event: ActivityEvent }) {
   const meta = TYPE_META[event.type] ?? TYPE_META.unknown;
 
   return (
-    <li className="flex items-start gap-3 rounded-lg border border-border-primary bg-background-secondary/20 p-3">
+    <li className="flex items-start gap-3 rounded-xl border border-[var(--color-border-primary)] bg-[color:color-mix(in_srgb,var(--color-bg-primary)_92%,var(--color-bg-secondary))] p-3 shadow-sm">
       <span
         className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm ${meta.className}`}
         aria-hidden="true"
@@ -49,21 +49,21 @@ export default function ActivityItem({ event }: { event: ActivityEvent }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-medium text-text-primary">
+          <span className="truncate text-sm font-medium text-[var(--color-text-primary)]">
             {meta.label}
             {event.name && event.name !== "unknown" ? (
-              <span className="ml-1 font-normal text-text-secondary">({event.name})</span>
+              <span className="ml-1 font-normal text-[var(--color-text-secondary)]">({event.name})</span>
             ) : null}
           </span>
           <time
-            className="shrink-0 text-xs text-text-secondary"
+            className="shrink-0 text-xs text-[var(--color-text-secondary)]"
             dateTime={event.timestamp}
           >
             {formatTimestamp(event.timestamp)}
           </time>
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-secondary)]">
           <span>Ledger #{event.ledger}</span>
           {event.contractId && event.contractId !== "unknown" ? (
             <span className="font-mono">{shortenAddress(event.contractId)}</span>
