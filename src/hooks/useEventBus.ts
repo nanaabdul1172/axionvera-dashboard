@@ -9,5 +9,5 @@ export function useEventBus<TType extends keyof DashboardEventMap & string>(
 ): void {
   useEffect(() => {
     return eventBus.subscribe(type, handler, options);
-  }, [type, handler, options.priority, options.subscriberId]);
+  }, [type, handler, options]);
 }

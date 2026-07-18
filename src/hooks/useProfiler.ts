@@ -32,20 +32,19 @@ export function useProfiler({ componentName, trackStateUpdates = true }: Profile
     };
   }, [componentName]);
 
-  // Optional: A helper to wrap state setters to track when state changes triggered the render
-  const trackState = <T,>(initialValue: T): [T, (val: T) => void] => {
-    const [state, setState] = useState<T>(initialValue);
-    const setTrackedState = (val: T) => {
-      if (trackStateUpdates) {
-        recordLifecycleEvent(componentName, 'stateUpdate', performance.now());
-      }
-      setState(val);
-    };
-    return [state, setTrackedState];
-  };
-
   return {
     renderCount: renderCount.current,
-    trackState
   };
+}
+
+// Hook for tracking state updates with profiling
+export function useTrackedState<T>(initialValue: T, componentName: string, trackStateUpdates = true): [T, (val: T) => void] {
+  const [state, setState] = useState<T>(initialValue);
+  const setTrackedState = (val: T) => {
+    if (trackStateUpdates) {
+      recordLifecycleEvent(componentName, 'stateUpdate', performance.now());
+    }
+    setState(val);
+  };
+  return [state, setTrackedState];
 }

@@ -8,6 +8,7 @@
 import React, { ReactNode, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useRBAC } from "@/contexts/RBACContext";
+import { canAccessRoute } from "@/permissions/rbac";
 import { UserRole, Permission, RouteAccess } from "@/types/rbac";
 import { getRouteAccess } from "@/permissions/routes";
 import { validateNavigationTransition } from "@/navigation/stateMachine";
@@ -141,29 +142,32 @@ export function withRouteGuard<P extends object>(
       ? canAccessRoute(user, routeConfig)
       : { granted: true };
 
-    useEffect(() => {
-      if (!routeConfig) return;
-      if (!accessResult.granted && !fallback) {
-        router.push(redirectPath);
-      }
-    }, [accessResult.granted, fallback, redirectPath, routeConfig, router]);
-
-    // If no config found, allow access (default behavior)
-    if (!routeConfig) {
-      return <Component {...props} />;
-    }
-
     const transition = validateNavigationTransition("public", {
       pathname: router.pathname,
       user,
       isAuthenticated,
     });
 
+    // Call all hooks before any conditional returns
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+      if (!routeConfig) return;
+      if (!accessResult.granted && !options?.fallback) {
+        router.push(options?.redirectTo ?? "/");
+      }
+    }, [accessResult.granted, routeConfig, router]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
       if (!transition.allowed && !options?.fallback) {
         router.push(transition.redirectTo ?? options?.redirectTo ?? "/");
       }
-    }, [options?.fallback, options?.redirectTo, router, transition.allowed, transition.redirectTo]);
+    }, [router, transition]);
+
+    // If no config found, allow access (default behavior)
+    if (!routeConfig) {
+      return <Component {...props} />;
+    }
 
     // Access denied
     if (!transition.allowed) {

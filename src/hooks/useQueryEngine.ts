@@ -4,7 +4,7 @@ import { QueryEngine } from '@/query';
 import type { QueryRecord, QueryResult, QuerySpec } from '@/query';
 
 export function useQueryEngine<T extends QueryRecord>(options?: { cacheSize?: number }): QueryEngine<T> {
-  return useMemo(() => new QueryEngine<T>(options), [options?.cacheSize]);
+  return useMemo(() => new QueryEngine<T>(options), [options]);
 }
 
 export function useQuery<T extends QueryRecord>(data: readonly T[], query: QuerySpec<T>, options?: { cacheSize?: number }): QueryResult<T> {
